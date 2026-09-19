@@ -162,18 +162,31 @@ namespace Styx.Logic
 			if (!StartSellSession())
 				return;
 
+			object session = _sellSessionCandidate;
+			if (session == null || !_sellSessionActive)
+				return;
+
 			_merchantFrame.SellItemQualities(
 				_sellSessionQualities,
 				_sellSessionProtectedNames ?? Enumerable.Empty<string>(),
 				_sellSessionProtectedIds ?? Enumerable.Empty<uint>());
+			// The bulk callback may have reset or replaced the admitted session.
+			if (!ReferenceEquals(_sellSessionCandidate, session) || !_sellSessionActive)
+				return;
 			ResetSellSession();
 			ForceSell = false;
 		}
 
 		internal static bool SellAllItemsStep()
 		{
-			if (!_sellSessionActive && !StartSellSession())
-				return true;
+			if (!_sellSessionActive)
+			{
+				Profile? profile = ProfileManager.CurrentProfile;
+				if (!StartSellSession())
+					// An aborted candidate cannot finish its caller's service sequence.
+					// Preserve only the existing no-profile-at-entry terminal no-op.
+					return profile == null && ProfileManager.CurrentProfile == null && !_sellSessionActive;
+			}
 
 			return ContinueSellSession();
 		}
@@ -308,11 +321,21 @@ namespace Styx.Logic
 
 		private static bool ContinueSellSession()
 		{
+			// A result and its diagnostics belong to the session that requested them.
+			// Reentrant callbacks may reset or publish a different session.
+			object session = _sellSessionCandidate;
+			bool OwnsSession() => session != null && _sellSessionActive
+				&& ReferenceEquals(_sellSessionCandidate, session);
+			if (!OwnsSession())
+				return false;
+
 			int result = _merchantFrame.SellNextItemQualities(
 				_sellSessionQualities,
 				_sellSessionProtectedNames ?? Enumerable.Empty<string>(),
 				_sellSessionProtectedIds ?? Enumerable.Empty<uint>());
 
+			if (!OwnsSession())
+				return false;
 			if (result < 0)
 				return false;
 
@@ -328,14 +351,27 @@ namespace Styx.Logic
 			if (result == 3)
 			{
 				Logging.WriteDebug("Vendor sale interrupted because the merchant window closed during the scan.");
+				if (!OwnsSession())
+					return false;
 				ResetSellSession();
 				return true;
 			}
 
+			if (result == 4)
+			{
+				Logging.Write("Vendor sale pass deferred by the bounded retry guard; no sale acknowledgement is inferred.");
+				if (!OwnsSession())
+					return false;
+				ResetSellSession();
+				ForceSell = false;
+				return true;
+			}
 			if (result != 0)
 				return false;
 
-			Logging.Write("Vendor sale complete: sold {0} eligible stack(s).", _sellSessionStackCount);
+			Logging.Write("Vendor sale pass complete: submitted {0} request(s); merchant acceptance is not inferred.", _sellSessionStackCount);
+			if (!OwnsSession())
+				return false;
 			ResetSellSession();
 			ForceSell = false;
 			return true;
@@ -456,6 +492,4 @@ namespace Styx.Logic
 		}
 	}
 }
-
-
 

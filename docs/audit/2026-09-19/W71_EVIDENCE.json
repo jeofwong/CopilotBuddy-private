@@ -1,0 +1,71 @@
+{
+  "schema": "copilotbuddy-audit-evidence-v1",
+  "checkpoint": "W71",
+  "date": "2026-09-19",
+  "repo": "jeofwong/CopilotBuddy-private",
+  "pr": 51,
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "verified": {
+    "sha": "5db0de566cea515a21f3706fd7835b82dda9737a",
+    "tree": "f9b8a5cbb14ebad0a419ac1a53ff3ab04dafbad0",
+    "integrated": {
+      "run_id": 35430867637,
+      "artifact_id": 10580233586,
+      "digest": "sha256:3af129a679ad1a8a4a5c30089b5dcb1794056731f3d6f7ce9cb62a5dd12acf6f",
+      "conclusion": "success"
+    },
+    "host": {
+      "run_id": 35430867668,
+      "artifact_id": 10580507599,
+      "digest": "sha256:138a96cce762f8cfdd3fe71da22cd05dfa89765bb2b22c664f54d269476d17bb",
+      "errors": 0,
+      "warnings": 3340,
+      "conclusion": "success"
+    },
+    "quest_log_owner_production": {
+      "sha": "16acaaac108d817642993e48bfe25dc10958c298",
+      "run_id": 35430209827,
+      "artifact_id": 10580646500,
+      "digest": "sha256:8299023fb6fb63392bea04a4997449d7ad2e907480ded378fc5c681b410b809b",
+      "conclusion": "success"
+    }
+  },
+  "prerequisite_red_green": {
+    "initial_test_sha": "7619bc0c5ab2dbe6e8c91d86987d5f7bb8e6e081",
+    "strengthened_test_sha": "d0f4b8d0a795ef9d7b4aa95320397b5a89cab84e",
+    "final_red_sha": "2414e769bd4b49a948e55c39a120c71601329fb1",
+    "final_red_run": 35430000327,
+    "final_red_artifact": 10580931092,
+    "final_red_result": "7/14 pass; 7 intended assertions; 0 unexpected",
+    "production_sha": "16acaaac108d817642993e48bfe25dc10958c298",
+    "fixture_alignment_sha": "5db0de566cea515a21f3706fd7835b82dda9737a"
+  },
+  "retained_groups": {
+    "dependent_previous_alternatives": "14/14",
+    "active_parent_prerequisites": "32/32",
+    "negative_exclusive_dependencies": "10/10",
+    "container_slot_identity": "9/9",
+    "singular_required_registrations": "189/189",
+    "plugin_refresh_reuse": "9/9",
+    "gossip_event_strategy": "14/14"
+  },
+  "pinned_sources": {
+    "trinitycore_335": "8fda442f6c30ca21a622638063ab8b28376f1b25",
+    "azerothcore_wotlk": "8337a378ac325e62a6a91e00c6a5e944205e8536",
+    "original_client_ui": "d0339b17b0221db76e6acd2dc2915d224a5b62ca"
+  },
+  "next": {
+    "owner": "runtime-snapshot/Bots/WholesomeAutoQuest-master/QuestScheduler.cs",
+    "issue": "negative direct PrevQuestID currently accepts a ready/completed quest; TC335 requires QUEST_STATUS_INCOMPLETE while pinned AC is broader",
+    "observation": "QuestSchedulerAcceptedQuest.IsCompleted / QuestLogSnapshot ReadyQuestIds",
+    "policy": "test TC-primary conservative accepted-and-not-ready semantics; retain AC divergence explicitly"
+  },
+  "claims_not_made": [
+    "complete realm prerequisite reconstruction",
+    "complete negative-exclusive group membership for an unknown-provenance dataset",
+    "AzerothCore ready-parent semantic parity",
+    "cursor/delete/equip/auction transaction safety",
+    "live original-client/server acceptance",
+    "master merge or deployment"
+  ]
+}

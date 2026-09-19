@@ -22,6 +22,7 @@ namespace WholesomeAQ
     {
         public uint QuestId { get; init; }
         public bool IsCompleted { get; init; }
+        public bool IsFailed { get; init; }
         public IReadOnlyList<int> ObjectiveCounts { get; init; } = Array.Empty<int>();
     }
 
@@ -187,7 +188,7 @@ namespace WholesomeAQ
             if (!tryApplyPublication(() => InvalidatePublishedWork("Refreshing quest observations; prior work is not authorized.")))
                 return false;
             QuestRecoveryRuntime.EnsureConfigured(
-                _dataLoader.DatasetFingerprint,
+                _dataLoader.ExecutionFingerprint,
                 NavigationProviderFingerprint());
             QuestLog questLog = me.QuestLog;
             QuestLogSnapshot observation = questLog.CaptureSnapshot();
@@ -197,6 +198,7 @@ namespace WholesomeAQ
                 {
                     QuestId = quest.Id,
                     IsCompleted = quest.IsCompleted,
+                    IsFailed = observation.FailedQuestIds.Contains(quest.Id),
                     ObjectiveCounts = ReadObjectiveCounts(quest)
                 })
                 .ToArray();
@@ -273,7 +275,8 @@ namespace WholesomeAQ
             if (candidate.Selected.Count > 0)
             {
                 string xml = _profileBuilder.BuildProfileXml(
-                    candidate.Plan, db, me.ZoneText, me.Name, me.Level, CurrentVendors);
+                    candidate.Plan, db, me.ZoneText, me.Name, me.Level, CurrentVendors,
+                    _dataLoader.StrategyPack);
                 if (!TryApplyObserved(() => path = _profileBuilder.WriteProfile(xml)))
                     return false;
             }
@@ -475,6 +478,7 @@ namespace WholesomeAQ
             if (snapshot.HasAuthoritativeCompletions && !questLogFull)
             {
                 int minimumLevel = Math.Max(1, snapshot.PlayerLevel - minQuestLevelOffset);
+                var claimedPositiveExclusiveGroups = new HashSet<int>();
                 foreach (QuestEntry quest in db.Quests.OrderBy(quest => quest.QuestLevel).ThenBy(quest => quest.Id))
                 {
                     uint questId = (uint)quest.Id;
@@ -485,17 +489,36 @@ namespace WholesomeAQ
                         !RaceAllowed(quest.AllowableRaces, snapshot.PlayerRaceId) ||
                         !Supported(quest))
                         continue;
-
-                    uint ancestor = FindAcceptedIncompleteAncestor(quest, quests, accepted, completed);
-                    if (ancestor != 0 || !PrerequisitesComplete(quest, completed))
+                    if (!PositiveExclusiveGroupAvailable(
+                        quest, db, accepted, completed, claimedPositiveExclusiveGroups))
                         continue;
 
+                    // TrinityCore 3.3.5 primary: a negative direct PrevQuestID
+                    // requires QUEST_STATUS_INCOMPLETE. Accepted ready/completed
+                    // and failed parents do not unlock the child. Pinned
+                    // AzerothCore WotLK is broader (non-NONE); keep that
+                    // compatibility difference explicit rather than inferring a
+                    // source core from the realm or dataset name.
+                    if (quest.PrevQuestID < 0 &&
+                        (quest.PrevQuestID == int.MinValue ||
+                         !accepted.TryGetValue((uint)-quest.PrevQuestID, out QuestSchedulerAcceptedQuest activeParent) ||
+                         activeParent.IsCompleted ||
+                         activeParent.IsFailed))
+                        continue;
+
+                    uint ancestor = FindAcceptedIncompleteAncestor(quest, quests, accepted, completed);
+                    if (ancestor != 0 || !PrerequisitesComplete(quest, quests, completed))
+                        continue;
+
+                    int plannedBefore = candidatePlans.Count;
                     AddRelationWork(
                         quest, QuestWorkStage.Pickup, QuestRecoveryStage.Pickup,
                         db.QuestGivers.Where(giver => giver.QuestId == quest.Id)
                             .Select(giver => new Relation(giver.GiverId, giver: giver)),
                         db, snapshot, evaluate, candidates, candidatePlans, exclusions, scanThreshold,
                         assessNavigation, reportDataFailure);
+                    if (quest.ExclusiveGroup > 0 && candidatePlans.Count > plannedBefore)
+                        claimedPositiveExclusiveGroups.Add(quest.ExclusiveGroup);
                 }
             }
 
@@ -746,7 +769,7 @@ namespace WholesomeAQ
                 // metadata. Do not turn an unused source into a quest-data failure.
                 if (IsObjectiveComplete(objective, objectiveCounts, snapshot.CarriedItemCounts))
                     continue;
-                if (!Supported(objective))
+                if (!Supported(quest, objective))
                 {
                     var unsupportedKey = QuestRecoveryKey.ForObjective((uint)quest.Id, objective.Index);
                     QuestRecoveryDecision unsupportedDecision = evaluate(unsupportedKey);
@@ -1319,7 +1342,15 @@ namespace WholesomeAQ
         }
 
         private static bool Supported(QuestEntry quest) =>
-            quest.Objectives.Count > 0 && quest.Objectives.All(Supported);
+            quest.Objectives.Count > 0 && quest.Objectives.All(objective => Supported(quest, objective));
+
+        private static bool Supported(QuestEntry quest, QuestObjective objective) =>
+            Supported(objective) &&
+            // Both TrinityCore 3.3.5 and AzerothCore use SpecialFlags 0x20
+            // for cast credit, not a kill. No item/interaction recipe is implied.
+            // Keep the imported row intact; unsupported work is reported by its
+            // existing objective owner, after satisfied counters are considered.
+            (objective.Type != ObjectiveType.KillMob || (quest.SpecialFlags & 0x20) == 0);
 
         private static bool Supported(QuestObjective objective) =>
             (objective.Type == ObjectiveType.KillMob && objective.MobId > 0) ||
@@ -1368,11 +1399,108 @@ namespace WholesomeAQ
                 .SelectMany(giver => GetRelationSpawns(giver.GiverId, giver.GiverType, db))
                 .Any(point => InRange(point, snapshot, scanThreshold));
 
-        private static bool PrerequisitesComplete(QuestEntry quest, HashSet<uint> completed)
+        private static bool PositiveExclusiveGroupAvailable(
+            QuestEntry quest,
+            QuestDatabase db,
+            IReadOnlyDictionary<uint, QuestSchedulerAcceptedQuest> accepted,
+            HashSet<uint> completed,
+            HashSet<int> claimed)
         {
-            if (quest.PrevQuestID > 0 && !completed.Contains((uint)quest.PrevQuestID))
+            int group = quest.ExclusiveGroup;
+            if (group <= 0)
+                return true;
+            if (claimed.Contains(group))
                 return false;
-            return quest.PreviousQuestsIds.All(id => id <= 0 || completed.Contains((uint)id));
+
+            return !db.Quests.Any(other =>
+                other.Id > 0 &&
+                other.Id != quest.Id &&
+                other.ExclusiveGroup == group &&
+                (accepted.ContainsKey((uint)other.Id) || completed.Contains((uint)other.Id)));
+        }
+
+        private static bool PrerequisitesComplete(
+            QuestEntry quest,
+            IReadOnlyDictionary<uint, QuestEntry> quests,
+            HashSet<uint> completed) =>
+            BlockingPrerequisiteRoots(quest, quests, completed).Count == 0;
+
+        private static IReadOnlyList<uint> BlockingPrerequisiteRoots(
+            QuestEntry quest,
+            IReadOnlyDictionary<uint, QuestEntry> quests,
+            HashSet<uint> completed)
+        {
+            var blockers = new List<uint>();
+            var seen = new HashSet<uint>();
+
+            // Direct PrevQuestID keeps its own signed 3.3.5 contract. The
+            // negative form is handled by the active-parent gate above; the
+            // positive form independently requires rewarded history.
+            if (quest.PrevQuestID > 0)
+            {
+                uint direct = (uint)quest.PrevQuestID;
+                if (!completed.Contains(direct) && seen.Add(direct))
+                    blockers.Add(direct);
+            }
+
+            // Pinned TrinityCore 3.3.5 treats DependentPreviousQuests as an
+            // ordered OR. A rewarded ordinary/positive-group predecessor
+            // satisfies the dependent gate immediately. A rewarded predecessor
+            // in a negative ExclusiveGroup switches to each-from-all semantics;
+            // a missing member fails that gate immediately rather than falling
+            // through to a later alternative.
+            foreach (int rawId in quest.PreviousQuestsIds)
+            {
+                if (rawId <= 0)
+                    continue;
+
+                uint id = (uint)rawId;
+                if (!completed.Contains(id))
+                    continue;
+
+                // Unknown predecessor metadata cannot prove that this completed
+                // quest is an ordinary alternative. Keep scanning for another
+                // rewarded candidate with known metadata; otherwise fail closed.
+                if (!quests.TryGetValue(id, out QuestEntry predecessor))
+                    continue;
+
+                if (predecessor.ExclusiveGroup >= 0)
+                    return blockers;
+
+                int group = predecessor.ExclusiveGroup;
+                uint[] missingGroupMembers = quests.Values
+                    .Where(candidate =>
+                        candidate.Id > 0 &&
+                        candidate.ExclusiveGroup == group &&
+                        !completed.Contains((uint)candidate.Id))
+                    .Select(candidate => (uint)candidate.Id)
+                    .OrderBy(candidateId => candidateId)
+                    .ToArray();
+
+                if (missingGroupMembers.Length == 0)
+                    return blockers;
+
+                foreach (uint missing in missingGroupMembers)
+                    if (seen.Add(missing))
+                        blockers.Add(missing);
+
+                return blockers;
+            }
+
+            // No known rewarded alternative satisfied the dependent gate.
+            // Preserve source order and keep unknown completed candidates as
+            // blockers: completion without predecessor metadata is not
+            // permission to assume non-negative group semantics.
+            foreach (int rawId in quest.PreviousQuestsIds)
+            {
+                if (rawId <= 0)
+                    continue;
+                uint id = (uint)rawId;
+                if (seen.Add(id))
+                    blockers.Add(id);
+            }
+
+            return blockers;
         }
 
         private static uint FindAcceptedIncompleteAncestor(
@@ -1383,8 +1511,8 @@ namespace WholesomeAQ
         {
             var pending = new Queue<uint>();
             var seen = new HashSet<uint>();
-            foreach (int id in DirectPrerequisites(quest))
-                if (id > 0) pending.Enqueue((uint)id);
+            foreach (uint id in BlockingPrerequisiteRoots(quest, quests, completed))
+                pending.Enqueue(id);
 
             while (pending.Count > 0)
             {
@@ -1395,19 +1523,11 @@ namespace WholesomeAQ
                     return id;
                 if (quests.TryGetValue(id, out QuestEntry ancestor))
                 {
-                    foreach (int previous in DirectPrerequisites(ancestor))
-                        if (previous > 0) pending.Enqueue((uint)previous);
+                    foreach (uint previous in BlockingPrerequisiteRoots(ancestor, quests, completed))
+                        pending.Enqueue(previous);
                 }
             }
             return 0;
-        }
-
-        private static IEnumerable<int> DirectPrerequisites(QuestEntry quest)
-        {
-            if (quest.PrevQuestID > 0)
-                yield return quest.PrevQuestID;
-            foreach (int id in quest.PreviousQuestsIds.OrderBy(id => id))
-                yield return id;
         }
 
         private static IReadOnlyList<int> ReadObjectiveCounts(PlayerQuest quest)

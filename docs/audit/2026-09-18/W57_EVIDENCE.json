@@ -1,0 +1,87 @@
+{
+  "schema": 1,
+  "date": "2026-09-18",
+  "repository": "jeofwong/CopilotBuddy-private",
+  "repository_id": 1367174964,
+  "pr": 51,
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "master": "f462a9bb4eb18acac9069f495177df35672286d5",
+  "verified_code": "44ff289ae1afd8fcef625948b10b5af8819deb26",
+  "verified_tree": "f25c23875730aa8c737da0c3011901713f2335d7",
+  "recovered_test_only_head": "7854c3f577f389945fc393239f8b6f21b5c0f1c0",
+  "artifacts": {
+    "red": {
+      "file": "evidence/w57-cast-credit-red-7854c3f5.zip",
+      "commit": "7854c3f577f389945fc393239f8b6f21b5c0f1c0",
+      "run_id": 35292526779,
+      "artifact_id": 10527232042,
+      "sha256": "b70e93e80cf27dfab58ff0f0fedf29e135f8577ed10f43b0caaeab146c5187de"
+    },
+    "green": {
+      "file": "evidence/w57-cast-credit-green-44ff289a.zip",
+      "commit": "44ff289ae1afd8fcef625948b10b5af8819deb26",
+      "run_id": 35294707613,
+      "artifact_id": 10527486517,
+      "sha256": "deca5cbf9240c9abdef9d57667fe6359e9f1068c1eb256917456b2b6e3fec7ad"
+    },
+    "host": {
+      "file": "evidence/w57-host-44ff289a.zip",
+      "commit": "44ff289ae1afd8fcef625948b10b5af8819deb26",
+      "run_id": 35294707643,
+      "artifact_id": 10528400041,
+      "sha256": "1fbc9c73016cedd8191cead2016bf0626daffa46947aa433ca9d215c097ef6f6"
+    }
+  },
+  "new_repair": {
+    "source": "runtime-snapshot/Bots/WholesomeAutoQuest-master/QuestScheduler.cs",
+    "blob": "29c3df86b9dee13ab8fdff8651aaa4f5bd85a20b",
+    "red_passed": 10,
+    "total": 20,
+    "red_assertions": 10,
+    "red_unexpected": 0,
+    "green_passed": 20,
+    "green_assertions": 0,
+    "green_unexpected": 0,
+    "unchanged_other_aggregate_outcomes": 87,
+    "unchanged_normalized_members": 100,
+    "input_hashes": 1774,
+    "original_tests_and_workflows_unchanged": true
+  },
+  "final": {
+    "integrated_entries": 17,
+    "all_builds_and_runs_pass": true,
+    "passing_aggregate_groups": 88,
+    "internal_manifest_entries": 144,
+    "host_errors": 0,
+    "host_warnings": 3296,
+    "host_inner_manifest": null,
+    "game_attached": false
+  },
+  "recovered_feature_cases": {
+    "QuestItemTargetSelection": 44,
+    "QuestItemDispatch": 72,
+    "GreaterBlessings": 87,
+    "PaladinAuraCoordination": 70,
+    "LowbieAuraCoordination": 10,
+    "ProtectionRecovery": 53,
+    "CoreEngagementCompatibility": 38
+  },
+  "source_pins": {
+    "TrinityCore_335": "8fda442f6c30ca21a622638063ab8b28376f1b25",
+    "AzerothCore_WotLK": "8337a378ac325e62a6a91e00c6a5e944205e8536"
+  },
+  "compatibility_policy_blob": "315c0d1d4c2f959512e10106f6fa9c0a8a459da3",
+  "limits": {
+    "server_acceptance": false,
+    "all_prior_commits_live_verified_on_both_cores": false,
+    "automatic_all_quest_item_strategies": false,
+    "complete_GatherBuddy_HoJ_chain": false,
+    "all_class_rank_aware_buffs": false,
+    "measured_DPS_gain": false,
+    "exhaustive_complete": false,
+    "independent_approval": false,
+    "merged_PR51": false,
+    "new_workflow_changes": false,
+    "pending_unexecuted_test_at_verified_head": false
+  }
+}

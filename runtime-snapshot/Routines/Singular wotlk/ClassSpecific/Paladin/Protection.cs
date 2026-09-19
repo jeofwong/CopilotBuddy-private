@@ -21,10 +21,41 @@ namespace Singular.ClassSpecific.Paladin
         public static Composite CreateProtectionPaladinRest()
         {
             return new PrioritySelector(
-                // Rest up damnit! Do this first, so we make sure we're fully rested.
+                // Recover with learned self spells before an unavailable-food wait.
+                CreateProtectionPaladinHeal(),
                 Rest.CreateDefaultRestBehaviour(),
                 // Can we res people?
                 Spell.Resurrect("Redemption"));
+        }
+
+
+        // Tank hard-casts during combat are deliberately not introduced here.
+        // The combat defensive owner remains responsible for emergency cooldowns.
+        private static bool CanRecoverOutOfCombat()
+        {
+            var me = StyxWoW.Me;
+            return me != null && me.IsValid && me.IsAlive && !me.IsGhost
+                && !me.Combat && !me.Mounted && !me.IsOnTransport && !me.IsMoving
+                && !me.IsCasting && !me.IsChanneling && !me.HasAura("Food") && !me.HasAura("Drink");
+        }
+
+        [Class(WoWClass.Paladin)]
+        [Spec(TalentSpec.ProtectionPaladin)]
+        [Behavior(BehaviorType.Heal)]
+        [Context(WoWContext.All)]
+        public static Composite CreateProtectionPaladinHeal()
+        {
+            return new PrioritySelector(
+                Spell.Heal("Holy Light", ret => StyxWoW.Me,
+                    ret => CanRecoverOutOfCombat()
+                        && StyxWoW.Me.HealthPercent <= SingularSettings.Instance.Paladin.HolyLightHealth),
+                Spell.Heal("Flash of Light", ret => StyxWoW.Me,
+                    ret => CanRecoverOutOfCombat()
+                        && StyxWoW.Me.HealthPercent <= SingularSettings.Instance.Paladin.FlashOfLightHealth),
+                // Do not impose the healing penalty while health recovery is needed.
+                Spell.BuffSelf("Divine Plea", ret => CanRecoverOutOfCombat()
+                    && StyxWoW.Me.HealthPercent >= 95
+                    && StyxWoW.Me.ManaPercent < SingularSettings.Instance.Paladin.DivinePleaMana));
         }
 
 
@@ -75,7 +106,6 @@ namespace Singular.ClassSpecific.Paladin
                     new PrioritySelector(
 			Spell.Cast("Divine Plea", ret => StyxWoW.Me.ManaPercent < 75),
                         Spell.Cast("Hammer of the Righteous"),
-                        Spell.Cast("Hammer of Justice", ctx => !StyxWoW.Me.IsInParty),
                         Spell.Cast("Consecration", ret => Unit.NearbyUnfriendlyUnits.Count(u => u.Distance <= 8) >= SingularSettings.Instance.Paladin.ProtConsecrationCount 
                             || StyxWoW.Me.CurrentTarget?.IsBoss() == true),
                         Spell.Cast("Holy Wrath"),
@@ -87,7 +117,6 @@ namespace Singular.ClassSpecific.Paladin
                 //Single target
 		Spell.Cast("Divine Plea", ret => StyxWoW.Me.ManaPercent < 75),
                 Spell.Cast("Shield of Righteousness"), // WotLK: Crusader Strike is Ret-only, Shield of Righteousness is the Prot filler (L75, 6s CD)
-                Spell.Cast("Hammer of Justice"),
                 Spell.Cast("Judgement of Wisdom"),
                 Spell.Cast("Hammer of Wrath", ret => ((WoWUnit)ret).HealthPercent <= 20),
                 Spell.Cast("Avenger's Shield", ret => !SingularSettings.Instance.Paladin.AvengersPullOnly),

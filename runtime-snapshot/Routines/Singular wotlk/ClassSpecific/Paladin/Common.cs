@@ -40,7 +40,7 @@ namespace Singular.ClassSpecific.Paladin
 
     enum PaladinBlessings
     {
-        Auto, Kings, Might, Wisdom // WotLK: Blessing of Wisdom is separate (merged into Might in Cata 4.0.1)
+        Auto, Kings, Might, Wisdom, Sanctuary // WotLK: Blessing of Wisdom is separate (merged into Might in Cata 4.0.1)
     }
 
     public partial class Common
@@ -98,6 +98,7 @@ namespace Singular.ClassSpecific.Paladin
         }
 
         private static Composite CreatePaladinBlessBehavior() =>
-            CreateSupportBehavior(FindBlessingAction, "Blessing of Kings", "Blessing of Might", "Blessing of Wisdom");
+            CreateSupportBehavior(FindBlessingAction, "Blessing of Kings", "Blessing of Might", "Blessing of Wisdom", "Blessing of Sanctuary",
+                "Greater Blessing of Kings", "Greater Blessing of Might", "Greater Blessing of Wisdom", "Greater Blessing of Sanctuary");
     }
 }

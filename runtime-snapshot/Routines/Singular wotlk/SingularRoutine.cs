@@ -18,7 +18,7 @@ using TreeSharp;
 
 namespace Singular
 {
-    public partial class SingularRoutine : CombatRoutine
+    public partial class SingularRoutine : CombatRoutine, IIsolationPullProvider
     {
         private Composite _combatBehavior;
         private Composite _combatBuffsBehavior;
@@ -86,6 +86,37 @@ namespace Singular
         public override Composite PullBuffBehavior { get { return _pullBuffsBehavior; } }
 
         public override Composite RestBehavior { get { return _restBehavior; } }
+
+        // Dense-pack isolation is deliberately opt-in and narrow. LevelBot owns
+        // risk/movement; Singular only exposes a Ret-specific ranged opener.
+        public double IsolationPullDistance
+        {
+            get
+            {
+                if (StyxWoW.Me == null ||
+                    CurrentWoWContext != WoWContext.Normal ||
+                    TalentManager.CurrentSpec != TalentSpec.RetributionPaladin ||
+                    !Styx.Logic.Combat.SpellManager.HasSpell("Exorcism"))
+                    return 0d;
+
+                if (Styx.Logic.Combat.SpellManager.Spells.TryGetValue("Exorcism", out var spell) &&
+                    spell != null && spell.MaxRange > 0)
+                    return Math.Max(8d, Math.Min(28d, spell.MaxRange - 1d));
+
+                return 28d;
+            }
+        }
+
+        public Composite CreateIsolationPullBehavior()
+        {
+            if (StyxWoW.Me == null ||
+                CurrentWoWContext != WoWContext.Normal ||
+                TalentManager.CurrentSpec != TalentSpec.RetributionPaladin ||
+                !Styx.Logic.Combat.SpellManager.HasSpell("Exorcism"))
+                return new PrioritySelector();
+
+            return Singular.ClassSpecific.Paladin.Retribution.CreateRetributionPaladinIsolationPull();
+        }
 
         private static bool IsMounted
         {

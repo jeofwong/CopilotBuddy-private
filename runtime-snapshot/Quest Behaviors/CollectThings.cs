@@ -1240,6 +1240,31 @@ namespace BuddyWiki.CustomBehavior.CollectThings
         }
 
 
+        internal static double RequiredBreathLeadMilliseconds(
+            double distance,
+            double swimmingForwardSpeed,
+            double breathCheckThrottleSeconds)
+        {
+            if (double.IsNaN(distance) || double.IsInfinity(distance) || distance < 0
+                || double.IsNaN(swimmingForwardSpeed) || double.IsInfinity(swimmingForwardSpeed)
+                || swimmingForwardSpeed <= 0
+                || double.IsNaN(breathCheckThrottleSeconds) || double.IsInfinity(breathCheckThrottleSeconds)
+                || breathCheckThrottleSeconds < 0)
+            {
+                return double.PositiveInfinity;
+            }
+
+            double travelSeconds = ((distance / swimmingForwardSpeed) * 2.75)
+                + (3 * breathCheckThrottleSeconds);
+            if (double.IsNaN(travelSeconds) || double.IsInfinity(travelSeconds) || travelSeconds < 0)
+                return double.PositiveInfinity;
+
+            // Preserve the legacy 30-second safety floor, but never cap a longer
+            // recovery route. The old Math.Min(...) could wait until only 30 s
+            // remained even when the observed route needed substantially longer.
+            return Math.Max(30.0, travelSeconds) * 1000.0;
+        }
+
         private bool IsBreathNeeded()
         {
             int breathTimeRemaining = BreathTimeRemaining;
@@ -1250,17 +1275,15 @@ namespace BuddyWiki.CustomBehavior.CollectThings
             else if (Me.Class == WoWClass.Warlock)
             { return (breathTimeRemaining < MinTime_WarlockBreath); }
 
-            // Calculate time needed to get to an air source...
+            // Calculate time needed to get to an air source. Invalid movement
+            // observations fail closed by requesting recovery immediately.
             AirSource airSource = GetNearestAirSource();
-            double travelTime;
+            double requiredLead = RequiredBreathLeadMilliseconds(
+                airSource.Location.Distance(Me.Location),
+                Me.MovementInfo.SwimmingForwardSpeed,
+                ThrottleTimer_BreathCheck.TotalSeconds);
 
-            travelTime = (((airSource.Location.Distance(Me.Location) / Me.MovementInfo.SwimmingForwardSpeed)
-                          * 2.75)   // factor of safety
-                          + (3 * ThrottleTimer_BreathCheck.TotalSeconds));
-            travelTime = Math.Min(travelTime, 30.0);    // Hard-minimum of 30secs
-            travelTime *= 1000;     // to milliseconds
-
-            return (breathTimeRemaining <= travelTime);
+            return (breathTimeRemaining <= requiredLead);
         }
 
 

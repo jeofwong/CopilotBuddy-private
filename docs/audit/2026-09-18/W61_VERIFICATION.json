@@ -1,0 +1,11 @@
+{
+  "archive_sha256": "75055256969fd6d8baa218113fe49e08773965b09efd4bd35530c106c861eb3c",
+  "archive_crc_pass": true,
+  "text_members_rehashed": 6835,
+  "toc_members_rehashed": 376,
+  "root_nested_count_consistent": true,
+  "lua_executed": false,
+  "runtime_changes": false,
+  "new_gameplay_tests": false,
+  "third_party_payload_in_publication": false
+}

@@ -22,7 +22,8 @@ namespace Styx.Logic.Combat
         public static bool IsEngagedWithGroup(WoWUnit target)
         {
             var me = StyxWoW.Me;
-            if (me == null || target == null || !target.IsValid || !target.IsAlive
+            if (me == null || !me.IsValid || !me.IsAlive
+                || target == null || !target.IsValid || !target.IsAlive
                 || target.IsFriendly || !target.CanSelect || !target.Attackable || !target.Combat)
                 return false;
 

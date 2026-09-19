@@ -1,0 +1,127 @@
+{
+  "schema": 1,
+  "date": "2026-09-17",
+  "repository": "jeofwong/CopilotBuddy-private",
+  "repository_id": 1367174964,
+  "pr": 51,
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "master": "f462a9bb4eb18acac9069f495177df35672286d5",
+  "pr47_merged": true,
+  "latest_verified_code": "6e9049c1297058bf7128114e88a87bb7fcf2eafc",
+  "tree": "9b8189c8a43b9014954dc18b5a63f70830ebf37c",
+  "target": "original WoW3.3.5a build12340",
+  "artifacts": {
+    "merged_master": {
+      "file": "artifacts/w56-recovered-master-f462a9bb.zip",
+      "run_id": 35211182024,
+      "artifact_id": 10491763404,
+      "sha256": "77b96b92e19f0cf9a6fc06504d5b3f18ed7330a181318d28bab065d5ee90f44f",
+      "commit": "f462a9bb4eb18acac9069f495177df35672286d5"
+    },
+    "spell_red": {
+      "file": "artifacts/w56-sight-red-e62dbb72.zip",
+      "run_id": 35222753524,
+      "artifact_id": 10498220048,
+      "sha256": "4aebe8116a83fc708b900c56d80285b8ef65fad38bee3ca89a234135427d2e10",
+      "commit": "e62dbb72ded8ab9564dd0f3330f66e72ca652af7"
+    },
+    "spell_green": {
+      "file": "artifacts/w56-sight-green-eaeafecb.zip",
+      "run_id": 35223724385,
+      "artifact_id": 10498901253,
+      "sha256": "dbc9210c245f19d00eb04d34cc45ff71d3585eabe078c8dc0c0b9745cd6fc9f3",
+      "commit": "eaeafecb11744720f0160e758ba6eae71a63dbe5"
+    },
+    "movement_observer_red": {
+      "file": "artifacts/w56-movement-observer-red-4277abfd.zip",
+      "run_id": 35224544690,
+      "artifact_id": 10498882855,
+      "sha256": "3bc9f799db7c48b4837a0b8ef501be0de64f913a0813fcff5ea11abbd12a84e9",
+      "commit": "4277abfd00091936452bcb57ea34417233423eab"
+    },
+    "movement_red": {
+      "file": "artifacts/w56-movement-red-3773c67f.zip",
+      "run_id": 35225029603,
+      "artifact_id": 10498628998,
+      "sha256": "189f9d3d03ae980d49e0bce39d9c533f898005d6570cc5af15f49f41cbbc58af",
+      "commit": "3773c67fcc6c5157148548417780b1b5cabf7b36"
+    },
+    "movement_green": {
+      "file": "artifacts/w56-movement-green-6e9049c1.zip",
+      "run_id": 35226403760,
+      "artifact_id": 10499785441,
+      "sha256": "a6d8597371e112a5e41b6cdd32caf05458c8320e6e5175cbba3cd227c3fa30f5",
+      "commit": "6e9049c1297058bf7128114e88a87bb7fcf2eafc"
+    },
+    "host": {
+      "file": "artifacts/w56-host-6e9049c1.zip",
+      "run_id": 35226403801,
+      "artifact_id": 10499216509,
+      "sha256": "3c7eda76491a927c627e421ed6a0a28763ced098a4b250199b950c66731c2a2d",
+      "commit": "6e9049c1297058bf7128114e88a87bb7fcf2eafc"
+    }
+  },
+  "new_repairs": [
+    {
+      "name": "spell_sight_dispatch",
+      "changed_source_paths": [
+        "runtime-snapshot/Routines/Singular wotlk/Helpers/Spell.cs"
+      ],
+      "source_inputs": 1765,
+      "identical_normalized_members": 96,
+      "unchanged_other_group_outcomes": 83,
+      "red_summary": [
+        "Spell sight dispatch scenarios: 24/53; assertions=29; unexpected=0; exact tracked Cast/Buff region and real TreeSharp; controlled sight/range/backend; no native obstruction trace or game attached."
+      ],
+      "green_summary": [
+        "Spell sight dispatch scenarios: 53/53; assertions=0; unexpected=0; exact tracked Cast/Buff region and real TreeSharp; controlled sight/range/backend; no native obstruction trace or game attached."
+      ]
+    },
+    {
+      "name": "combat_sight_movement",
+      "changed_source_paths": [
+        "runtime-snapshot/Routines/Singular wotlk/Helpers/Movement.cs"
+      ],
+      "source_inputs": 1766,
+      "identical_normalized_members": 97,
+      "unchanged_other_group_outcomes": 84,
+      "red_summary": [
+        "Combat sight movement scenarios: 33/74; assertions=41; unexpected=0; complete tracked Movement and real TreeSharp; controlled world/navigation; no native path or game attached."
+      ],
+      "green_summary": [
+        "Combat sight movement scenarios: 74/74; assertions=0; unexpected=0; complete tracked Movement and real TreeSharp; controlled world/navigation; no native path or game attached."
+      ]
+    }
+  ],
+  "final": {
+    "integrated_entries": 17,
+    "all_pass": true,
+    "aggregate_groups": 85,
+    "source_input_hashes": 1766,
+    "normalized_members": 97,
+    "internal_manifest_entries": 141,
+    "host_errors": 0,
+    "host_warnings": 3296,
+    "host_tests_run": false,
+    "standalone_focused_run": false
+  },
+  "source_blobs": {
+    "Spell.cs": "e9acd6b7e550d72396dde2980d559d057407a254",
+    "Movement.cs": "f46f937c46c8a442ae1902f2250a76151e392d02",
+    "SpellSightDispatchRegressionTests.cs": "2f2a53bf130668a938ce120de19d39504e7df2fa",
+    "CombatSightMovementRegressionTests.cs": "20620b97f16db7412d0c430d82a3d1e6ded4b26f"
+  },
+  "utility_tests": 15,
+  "pending_unexecuted_test_at_final_code": false,
+  "workflow_changes": false,
+  "scope": {
+    "native_trace_executed": false,
+    "live_game_acceptance": false,
+    "independent_approval": false,
+    "maximum_dps_improvement": false,
+    "complete_obstacle_planner": false,
+    "all_class_rotation_execution": false,
+    "new_master_merge_in_W56": false,
+    "exhaustive_complete": false
+  }
+}

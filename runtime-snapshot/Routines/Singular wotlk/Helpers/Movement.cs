@@ -53,12 +53,25 @@ namespace Singular.Helpers
         /// </summary>
         public static Composite CreateEnsureMovementStoppedWithinRange(float range)
         {
-            return new Decorator(
-                ret => !SingularSettings.Instance.DisableAllMovement && 
-                       StyxWoW.Me.IsMoving && 
-                       StyxWoW.Me.CurrentTarget != null &&
-                       StyxWoW.Me.CurrentTarget.Distance <= range,
-                new Action(ret => Navigator.PlayerMover.MoveStop()));
+            return new Action(ret =>
+            {
+                var player = StyxWoW.Me;
+                if (!IsSightOwnerCurrent(player) || !player.IsMoving)
+                    return RunStatus.Failure;
+                var target = player.CurrentTarget;
+                if (!IsSightTargetUsable(target) || !(target.Distance <= range) ||
+                    (!target.IsMe && !target.InLineOfSpellSight))
+                    return RunStatus.Failure;
+
+                // Range alone cannot authorize stopping an approach behind a wall.
+                // Sight and target observations must not stop a replacement owner.
+                if (!IsSightTargetUsable(target) || !(target.Distance <= range) ||
+                    !ReferenceEquals(player.CurrentTarget, target) ||
+                    !IsSightOwnerCurrent(player) || !player.IsMoving)
+                    return RunStatus.Failure;
+                Navigator.PlayerMover.MoveStop();
+                return RunStatus.Success;
+            });
         }
 
         /// <summary>
@@ -186,7 +199,6 @@ namespace Singular.Helpers
         ///   Created 5/1/2011.
         /// </remarks>
         /// <param name = "stopInRange">true to stop in range.</param>
-        /// <param name = "range">The range.</param>
         /// <returns>.</returns>
         public static Composite CreateMoveToMeleeBehavior(bool stopInRange)
         {
@@ -289,12 +301,48 @@ namespace Singular.Helpers
 
         public static Composite CreateMoveToLosBehavior(UnitSelectionDelegate toUnit)
         {
-            return new Decorator(
-                ret =>
-                !SingularSettings.Instance.DisableAllMovement && toUnit != null && toUnit(ret) != null && 
-                toUnit(ret) != StyxWoW.Me && !toUnit(ret).InLineOfSpellSight,
-                new Action(ret => Navigator.MoveTo(toUnit(ret).Location)));
+            return new Action(ret =>
+            {
+                var player = StyxWoW.Me;
+                if (toUnit == null || !CanRecoverSight(player))
+                    return RunStatus.Failure;
+
+                // Select once per decision; repeated selectors can observe different
+                // units or needlessly repeat target-list/native observations.
+                var target = toUnit(ret);
+                if (!CanRecoverSight(player) || !IsSightTargetUsable(target) ||
+                    target.IsMe || target.InLineOfSpellSight)
+                    return RunStatus.Failure;
+                if (!CanRecoverSight(player) || !IsSightTargetUsable(target))
+                    return RunStatus.Failure;
+
+                var destination = target.Location;
+                if (!CanRecoverSight(player) || !IsSightTargetUsable(target) ||
+                    destination == WoWPoint.Empty || destination == WoWPoint.Zero ||
+                    !float.IsFinite(destination.X) || !float.IsFinite(destination.Y) ||
+                    !float.IsFinite(destination.Z))
+                    return RunStatus.Failure;
+
+                var result = Navigator.MoveTo(destination);
+                // A failed path is not handled movement. Let the next eligible
+                // combat/defensive action run; do not spin on a false Success.
+                return result == MoveResult.Moved || result == MoveResult.PathGenerated ||
+                       result == MoveResult.UnstuckAttempt || result == MoveResult.ReachedDestination
+                    ? RunStatus.Success : RunStatus.Failure;
+            });
         }
+
+        private static bool IsSightOwnerCurrent(WoWUnit player) =>
+            player != null && ReferenceEquals(player, StyxWoW.Me) &&
+            !SingularSettings.Instance.DisableAllMovement && player.IsValid && player.IsAlive;
+
+        private static bool CanRecoverSight(WoWUnit player) =>
+            IsSightOwnerCurrent(player) && !player.IsCasting && player.ChanneledCastingSpellId == 0;
+
+        // Druid Rebirth uses this helper for dead friendly players. Rejecting every
+        // dead unit here would break that legitimate resurrection approach.
+        private static bool IsSightTargetUsable(WoWUnit target) =>
+            target != null && target.IsValid && (target.IsAlive || target.IsFriendly);
 
     }
 

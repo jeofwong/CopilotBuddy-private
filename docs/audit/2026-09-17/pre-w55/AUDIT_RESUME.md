@@ -1,0 +1,13 @@
+# CopilotBuddy audit — W54 verified shared buffs and loot permissions
+
+Read `docs/audit/WOTLK_335A_RESEARCH_POLICY.md` FIRST. The fixed gameplay/client target is original WoW3.3.5a build12340, not WrathClassic3.4.x, Cataclysm or Retail. Every class/spec, stat, buff, gear and quest claim must have version-appropriate evidence. Then read `docs/audit/2026-09-17/W54_CHECKPOINT.md`, `W54_EVIDENCE.json`, `W54_GEAR_RESEARCH.md`, and `NEXT_CHAT_PROMPT.md`.
+
+Continue draft PR47 in `jeofwong/CopilotBuddy-private`, branch `audit/next-47-flight-owner-boundaries-20260916`. Re-read live refs before writing. Latest verified code is **06ab57a31bf2a1634b6dafaf781fa70f73197623**, tree53c2da7ecd31c7ea17de454d95a7d24bc96d67aa. Current focused4/4, integrated17/17 and host compile0 pass; host3296 warnings/0 errors, not game acceptance. Final focused/integrated1761 input hashes,92 normalized members and80 aggregate group outcomes match;115 source exports verified.
+
+New unchanged-fixture repairs: shared buff dispatch36/54->54/54, and client roll availability61/79->79/79, both with18 intended assertions and0unexpected in clean red. Intermediate e300 passed the new cases but failed two older closure/predicate compatibility checks;704 restored explicit outer guards without altering tests. The final loot fix06ab preserves existing stat weights, enum serialization and authorized DE behavior. No unexecuted test remains at the verified code head.
+
+Public-CI adaptation is already authorized, implemented and running. Older pending-approval/private-only-skipped status is obsolete. The current continuation successfully committed the policy, code/tests and this documentation; do not infer current write failure from old incidents. Bounded native retries and exact-source verification still apply.
+
+Master was freshly read at518baec545cedc8fe219afc0861c0e8cb9475a8f, preserving its separate README-only edit. No PR47 merge, force push, deployment or installed binary/mesh replacement. Preserve backups c43c50d8/8382a7ec, exclusions25/43/45 and the already integrated PR44 history. Archive older root pointers under `docs/audit/2026-09-17/pre-w54/`.
+
+The existing47-case Escort repair and63-case BattleShout/Might repair are retained, not pending recreation. Automatic Wholesome escort strategy, effective-rank/all-spec singleton policy, safe underwater escape, equipment-policy unification/active reward path, remaining native/upstream adaptations, independent review and original-client acceptance remain open. The preset contains positive Strength/Agility weights but two equipment paths disagree; no optimal DPS coefficients are established.

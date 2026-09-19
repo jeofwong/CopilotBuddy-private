@@ -1,0 +1,166 @@
+{
+  "schema": 1,
+  "repository": "jeofwong/CopilotBuddy-private",
+  "repository_id": 1367174964,
+  "target": "original WoW 3.3.5a build 12340",
+  "merged_pr": 47,
+  "master": "f462a9bb4eb18acac9069f495177df35672286d5",
+  "master_tree": "552eeab1233c7c282897dca0ed9f4334c5e8ed43",
+  "followup_pr": 51,
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "verified_code": "8e63d5158c7baec8f48f81f01e71089bf4aeb963",
+  "verified_tree": "7f61ab8468b839468174bdf5cf87bec9fc41f0c7",
+  "postmerge_verification": {
+    "premerge_code": "06ab57a31bf2a1634b6dafaf781fa70f73197623",
+    "merged_master": "f462a9bb4eb18acac9069f495177df35672286d5",
+    "matching_source_inputs": 1761,
+    "matching_groups": 80,
+    "matching_normalized_members": 92,
+    "all_17_pass": true
+  },
+  "final": {
+    "commit": "8e63d5158c7baec8f48f81f01e71089bf4aeb963",
+    "tree": "7f61ab8468b839468174bdf5cf87bec9fc41f0c7",
+    "all_17_pass": true,
+    "source_inputs": 1764,
+    "groups": 83,
+    "normalized_members": 95,
+    "separate_focused_execution": false
+  },
+  "host": {
+    "run": 35218450071,
+    "artifact": 10495688972,
+    "errors": 0,
+    "warnings": 3296,
+    "tests_run": false,
+    "game_attached": false
+  },
+  "pairs": [
+    {
+      "name": "unknown-equipment-no-disenchant",
+      "changed_source_paths": [
+        "runtime-snapshot/Plugins/SmartLootRoller/SmartLootRoller.cs"
+      ],
+      "source_inputs": 1763,
+      "identical_normalized_members": 94,
+      "unchanged_other_groups": 81,
+      "red_summary": [
+        "Equipment observation scenarios: 44/65; assertions=21; unexpected=0; actual scorer and roll/equip owners; reused controlled observations; no live equip or roll."
+      ],
+      "green_summary": [
+        "Equipment observation scenarios: 65/65; assertions=0; unexpected=0; actual scorer and roll/equip owners; reused controlled observations; no live equip or roll."
+      ],
+      "unexpected_errors": 0,
+      "tests_and_workflows_unchanged": true
+    },
+    {
+      "name": "hand-replacement",
+      "changed_source_paths": [
+        "runtime-snapshot/Plugins/SmartLootRoller/PawnScorer.cs"
+      ],
+      "source_inputs": 1764,
+      "identical_normalized_members": 95,
+      "unchanged_other_groups": 82,
+      "red_summary": [
+        "Equipment hand scenarios: 19/38; assertions=19; unexpected=0; actual scorer and equip consumer; controlled observations; not class proficiency, gear optimization or live equip."
+      ],
+      "green_summary": [
+        "Equipment hand scenarios: 38/38; assertions=0; unexpected=0; actual scorer and equip consumer; controlled observations; not class proficiency, gear optimization or live equip."
+      ],
+      "unexpected_errors": 0,
+      "tests_and_workflows_unchanged": true
+    }
+  ],
+  "artifacts": {
+    "premerge": {
+      "file": "artifacts/w54-loot-green-06ab57a3.zip",
+      "commit": "06ab57a31bf2a1634b6dafaf781fa70f73197623",
+      "sha256": "c164b1047fef05b28b29b3e53aba0f45dae7f6602175b55662b09a6d63e9c5dc",
+      "run_id": 35205551275,
+      "artifact_id": 10490106473
+    },
+    "merged_master": {
+      "file": "artifacts/w55-postmerge-master-f462a9bb.zip",
+      "commit": "f462a9bb4eb18acac9069f495177df35672286d5",
+      "sha256": "77b96b92e19f0cf9a6fc06504d5b3f18ed7330a181318d28bab065d5ee90f44f",
+      "run_id": 35211182024,
+      "artifact_id": 10491763404
+    },
+    "unknown_red": {
+      "file": "artifacts/w55-integrated-red-b99b2f9f.zip",
+      "commit": "b99b2f9f37a1d5980f3fb9c87124f18d14dab635",
+      "sha256": "3f9658624775d566d40e9d9bb43000db9772b7ef585d6517de49f1966edb5bc2",
+      "run_id": 35214405311,
+      "artifact_id": 10494404065
+    },
+    "unknown_green": {
+      "file": "artifacts/w55-integrated-green-b138c7fb.zip",
+      "commit": "b138c7fb60a32c902b914de89fc42e0c5af824ce",
+      "sha256": "5994371fb427ec00da03c87fa772c24f302b39dfc3ed27ad78d4f75853e6ea16",
+      "run_id": 35216145243,
+      "artifact_id": 10495172262
+    },
+    "hand_fixture_compile_failure": {
+      "file": "artifacts/w55-hands-red-eac0fd77.zip",
+      "commit": "eac0fd772d4045165c6fb6e9aca6c242a4c01b82",
+      "sha256": "21f6f4b36c375855ed2ad867ac71e246b30cdd420be037d5db86254dfbae029e",
+      "run_id": 35217193968,
+      "artifact_id": 10495442627
+    },
+    "hand_red": {
+      "file": "artifacts/w55-hands-clean-red-81add3ad.zip",
+      "commit": "81add3ad4feb50d24648699b7bb16e96af822c1d",
+      "sha256": "53538a5bf0b181cc81cae72bafcc296cf72e07f9d892cd25f53815bf6035f331",
+      "run_id": 35217870587,
+      "artifact_id": 10496255555
+    },
+    "hand_green": {
+      "file": "artifacts/w55-hands-green-8e63d515.zip",
+      "commit": "8e63d5158c7baec8f48f81f01e71089bf4aeb963",
+      "sha256": "408dbae0072e218b431a86fd92bacae0beb92d563899cf9c69191123c2da0bcb",
+      "run_id": 35218450081,
+      "artifact_id": 10496071675
+    },
+    "host_green": {
+      "file": "artifacts/w55-host-8e63d515.zip",
+      "commit": "8e63d5158c7baec8f48f81f01e71089bf4aeb963",
+      "sha256": "4597ab3b04cf057421f46fa7cad32ecfc834bba4411de367b0e80a6c59251f26",
+      "run_id": 35218450071,
+      "artifact_id": 10495688972
+    }
+  },
+  "source_blobs": {
+    "SmartLootRoller.cs": "7fc6a05dde48ccecfa94affe95a4bdb8e999d82c",
+    "PawnScorer.cs": "4d94405ab26a7f0f846e7cd429217aab9246a08a",
+    "EquipmentHandReplacementRegressionTests.cs": "40585af9238227e63936eec9dfcef79a92006925"
+  },
+  "retained": {
+    "equipment_observation": "65/65",
+    "slot_aliases": "71/71",
+    "hand_replacement": "38/38",
+    "SmartLoot": "79/79"
+  },
+  "utility_tests": 16,
+  "verified_initial_fixture_failure": "eac0fd77 dynamic compilation CS0103 before any hand cases; 81add3ad qualifies only the exception helper; all38 scenarios unchanged",
+  "scope": {
+    "new_repairs": 2,
+    "new_test_group": 1,
+    "numeric_stat_weights_changed": false,
+    "workflows_changed": false,
+    "separate_focused_execution": false,
+    "live_game": false,
+    "independent_approval": false,
+    "exhaustive_complete": false,
+    "new_pr51_merge": false,
+    "deployment": false
+  },
+  "root_archive_blobs": {
+    "AUDIT_RESUME.md": "cff9da87e9eefdce26bab0c219e37b6dd0cc795d",
+    "NEXT_CHAT_PROMPT.md": "36b0e877759fc7252a6a9a0a33b98a05e4672d7c"
+  },
+  "backups": {
+    "audit/backup-master-before-approved-merge-20260913": "c43c50d8d5d6775055f19bf018b52930a264d4a4",
+    "audit/backup-master-before-w42-merge-20260915": "8382a7ec05a64212ea0a237159dca427a0767425",
+    "audit/backup-master-before-w54-merge-20260917": "518baec545cedc8fe219afc0861c0e8cb9475a8f"
+  }
+}

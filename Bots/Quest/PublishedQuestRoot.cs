@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
 using Bots.Quest.Actions;
 using Bots.Quest.QuestOrder;
@@ -20,6 +21,8 @@ public sealed class PublishedQuestRoot : PrioritySelector
 {
     private readonly Bots.Quest.QuestOrder.QuestOrder order;
     private readonly Func<Func<bool>> capturePermission;
+    private readonly Func<IReadOnlyList<string>> readAddon;
+    private bool addonConflict;
     private Func<bool> permission;
     private Func<bool> runningPermission;
     private OrderNodeCollection nodes, runningNodes;
@@ -30,8 +33,16 @@ public sealed class PublishedQuestRoot : PrioritySelector
     private object executionContext;
 
     public PublishedQuestRoot(Func<Func<bool>> capturePermission)
+        : this(capturePermission, ReadQuestAutomation)
+    {
+    }
+
+    // The optional observer is a read-only external boundary. Each root retains
+    // its own confirmed conflict; no addon settings or shared bot state are set.
+    public PublishedQuestRoot(Func<Func<bool>> capturePermission, Func<IReadOnlyList<string>> readAddon)
     {
         this.capturePermission = capturePermission ?? throw new ArgumentNullException(nameof(capturePermission));
+        this.readAddon = readAddon ?? throw new ArgumentNullException(nameof(readAddon));
         order = QuestState.Instance.Order;
         // CreateRoot builds a fresh composition; do not borrow QuestBot.Root's
         // shared selector or mutate another bot's executor/admission policy.
@@ -68,7 +79,12 @@ public sealed class PublishedQuestRoot : PrioritySelector
             node = order.CurrentNode;
             behavior = order.CurrentBehavior;
             cycleChanged = false;
-            bool allowed = CanExecuteQuest();
+            bool allowed = HasCurrentPublication();
+            // Do not add an optional Lua round trip ahead of death/combat.
+            // Query once per eligible root tick, never from each executor gate.
+            if (allowed && ProtectivePriority() > 1)
+                ObserveAddonConflict();
+            allowed = CanExecuteQuest();
             exclusive = ObserveExclusiveOwner(allowed);
             allowed = CanExecuteQuest();
 
@@ -142,7 +158,9 @@ public sealed class PublishedQuestRoot : PrioritySelector
         && ReferenceEquals(order.CurrentNode, node)
         && (behavior == null || ReferenceEquals(order.CurrentBehavior, behavior));
 
-    private bool CanExecuteQuest()
+    private bool CanExecuteQuest() => !addonConflict && HasCurrentPublication();
+
+    private bool HasCurrentPublication()
     {
         if (cycleChanged || !CanRunRoot() || !SameCycleOrder())
             return false;
@@ -151,6 +169,44 @@ public sealed class PublishedQuestRoot : PrioritySelector
         // invalidates this cycle, even when the new owner is independently valid.
         if (!SameCycleOrder()) cycleChanged = true;
         return current && !cycleChanged && CanRunRoot();
+    }
+
+    // Contract of the reviewed TurnIn 2.1 upload: its runtime version string is
+    // "2.0". Metadata/version alone is not a server-core or addon authenticity
+    // check. Unknown layouts remain unknown; no addon code or callbacks run.
+    private const string QuestAutomationQuery =
+        "local v=rawget(_G,'TI_VersionString'); local f=rawget(_G,'TurnIn'); " +
+        "local t=rawget(_G,'TI_status'); " +
+        "if v==nil and f==nil and t==nil then return 'absent' end; " +
+        "if v~='2.0' or f==nil or type(t)~='table' then return 'unknown' end; " +
+        "local s=rawget(t,'state'); if s then return 'active' end; " +
+        "if s==false then return 'inactive' end; return 'unknown'";
+
+    private static IReadOnlyList<string> ReadQuestAutomation()
+        => Lua.GetReturnValues(QuestAutomationQuery);
+
+    private void ObserveAddonConflict()
+    {
+        IReadOnlyList<string> values;
+        try { values = readAddon(); }
+        catch (OperationCanceledException) { throw; }
+        catch (System.Threading.ThreadInterruptedException) { throw; }
+        catch (Exception) { return; } // Unavailable is not an explicit clearance.
+
+        // External observation can invalidate its actor/publication. Do not
+        // publish that observation into another lifetime or continue its effects.
+        if (!HasCurrentPublication() || values == null || values.Count != 1)
+            return;
+        bool previous = addonConflict;
+        switch (values[0])
+        {
+            case "active": addonConflict = true; break;
+            case "inactive":
+            case "absent": addonConflict = false; break;
+            default: return;
+        }
+        if (addonConflict && !previous)
+            Styx.Helpers.Logging.Write("[Wholesome] Quest execution paused: TurnIn automation is active. Use /ti off to let the bot own quest interaction. Combat and services remain available.");
     }
 
     private bool ObserveExclusiveOwner(bool allowed)

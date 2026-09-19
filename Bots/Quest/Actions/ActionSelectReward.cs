@@ -3,6 +3,8 @@
 // Assembly: Honorbuddy, Version=2.0.0.5999, Culture=neutral, PublicKeyToken=50a565ab5c01ae50
 // Based on HB 4.3.4 ActionSelectReward
 
+using System;
+using System.Collections.Generic;
 using Styx.Helpers;
 using Styx.Logic.Inventory;
 using Styx.Logic.Inventory.Frames.Quest;
@@ -15,88 +17,136 @@ using Action = TreeSharp.Action;
 namespace Bots.Quest.Actions;
 
 /// <summary>
-/// HB 4.3.4 ActionSelectReward — direct port.
-/// First pass: WeightSetEx.EvaluateItem(itemInfo, new ItemStats(itemLink)) on equippable items.
-/// Second pass: vendor sell-price fallback.
+/// Selects a quest reward only from a complete live original-client choice observation.
+/// Cache metadata may be stale or incomplete, so an unknown live choice identity defers
+/// instead of clicking an arbitrary index.
 /// </summary>
 public class ActionSelectReward : Action
 {
+    private const int MaximumRewardChoices = 64;
     private readonly WeightSetEx _weightSet = WeightSetEx.CurrentWeightSet;
+
+    internal sealed class LiveRewardChoice
+    {
+        public int Index { get; set; }
+        public uint ItemId { get; set; }
+        public int Count { get; set; }
+        public string ItemLink { get; set; }
+    }
+
+    internal static bool TryObserveLiveChoices(
+        Func<int> observeCount,
+        Func<int, string> observeLink,
+        Func<int, int?> observeStackCount,
+        out List<LiveRewardChoice> choices)
+    {
+        if (observeCount == null) throw new ArgumentNullException(nameof(observeCount));
+        if (observeLink == null) throw new ArgumentNullException(nameof(observeLink));
+        if (observeStackCount == null) throw new ArgumentNullException(nameof(observeStackCount));
+
+        choices = new List<LiveRewardChoice>();
+        int count = observeCount();
+        if (count < 0 || count > MaximumRewardChoices)
+            return false;
+
+        for (int index = 0; index < count; index++)
+        {
+            string itemLink = observeLink(index);
+            uint itemId = ConsumableVendorPolicy.ParseItemId(itemLink);
+            int? stackCount = observeStackCount(index);
+            if (itemId == 0 || string.IsNullOrEmpty(itemLink) ||
+                !stackCount.HasValue || stackCount.Value <= 0)
+            {
+                choices.Clear();
+                return false;
+            }
+
+            choices.Add(new LiveRewardChoice
+            {
+                Index = index,
+                ItemId = itemId,
+                Count = stackCount.Value,
+                ItemLink = itemLink
+            });
+        }
+
+        return true;
+    }
 
     protected override RunStatus Run(object context)
     {
-        Styx.Logic.Questing.Quest currentShownQuest = QuestManager.QuestFrame.CurrentShownQuest;
+        if (!TryObserveLiveChoices(
+            () => Lua.GetReturnVal<int>("return GetNumQuestChoices()", 0U),
+            index => Lua.GetReturnVal<string>(
+                string.Format("return GetQuestItemLink('choice', {0})", index + 1), 0U),
+            index =>
+            {
+                int count = Lua.GetReturnVal<int>(
+                    string.Format("return select(3, GetQuestItemInfo('choice', {0}))", index + 1), 0U);
+                return count;
+            },
+            out List<LiveRewardChoice> choices))
+        {
+            Logging.Write("Quest reward choices could not be observed completely; deferring reward selection.");
+            return RunStatus.Failure;
+        }
+
+        if (choices.Count == 0)
+        {
+            Logging.Write("No live quest reward choices are currently available; deferring reward selection.");
+            return RunStatus.Failure;
+        }
+
         float bestScore = float.MinValue;
         int bestIndex = -1;
         string bestName = "";
 
-        if (currentShownQuest != null)
+        // First pass: stat-weight evaluation on the exact live choice identity.
+        foreach (LiveRewardChoice choice in choices)
         {
-            Styx.WoWInternals.WoWCache.WoWCache.QuestCacheEntry internalInfo = currentShownQuest.InternalInfo;
+            ItemInfo itemInfo = ItemInfo.FromId(choice.ItemId);
+            if (itemInfo == null || !ObjectManager.Me.CanEquipItem(itemInfo))
+                continue;
 
-            // First pass: stat-weight evaluation via WeightSetEx (HB 4.3.4 pattern)
-            for (int i = 0; i < internalInfo.RewardChoiceItem.Length; i++)
+            ItemStats itemStats = new ItemStats(choice.ItemLink);
+            float score = _weightSet.EvaluateItem(itemInfo, itemStats);
+            if (score > bestScore)
             {
-                int itemId = internalInfo.RewardChoiceItem[i];
-                int itemCount = internalInfo.RewardChoiceItemCount[i];
-                if (itemId == 0 || itemCount == 0)
-                    continue;
-
-                ItemInfo itemInfo = ItemInfo.FromId((uint)itemId);
-                if (itemInfo == null || !ObjectManager.Me.CanEquipItem(itemInfo))
-                    continue;
-
-                string itemLink = Lua.GetReturnVal<string>(
-                    string.Format("return GetQuestItemLink('choice', {0})", i + 1), 0U);
-                if (string.IsNullOrEmpty(itemLink))
-                    continue;
-
-                ItemStats itemStats = new ItemStats(itemLink);
-                float score = _weightSet.EvaluateItem(itemInfo, itemStats);
-                if (score > bestScore)
-                {
-                    bestScore = score;
-                    bestIndex = i;
-                    bestName = itemInfo.Name;
-                }
+                bestScore = score;
+                bestIndex = choice.Index;
+                bestName = itemInfo.Name;
             }
+        }
 
-            // Second pass: vendor sell-price fallback (HB 4.3.4 pattern)
-            if (bestIndex == -1)
+        // Second pass: vendor sell-price fallback, still using only the live choice set.
+        if (bestIndex == -1)
+        {
+            float bestValue = float.MinValue;
+            foreach (LiveRewardChoice choice in choices)
             {
-                float bestValue = float.MinValue;
-                for (int j = 0; j < internalInfo.RewardChoiceItem.Length; j++)
+                ItemInfo itemInfo = ItemInfo.FromId(choice.ItemId);
+                if (itemInfo == null)
+                    continue;
+
+                float sellValue = (float)(itemInfo.SellPrice * choice.Count);
+                Logging.Write("{0}{1} sells for {2}",
+                    itemInfo.Name,
+                    choice.Count > 1 ? ("x" + choice.Count) : "",
+                    sellValue);
+
+                if (sellValue > bestValue)
                 {
-                    int itemId = internalInfo.RewardChoiceItem[j];
-                    int itemCount = internalInfo.RewardChoiceItemCount[j];
-                    if (itemId == 0 || itemCount <= 0)
-                        continue;
-
-                    ItemInfo itemInfo = ItemInfo.FromId((uint)itemId);
-                    if (itemInfo == null)
-                        continue;
-
-                    float sellValue = (float)(itemInfo.SellPrice * itemCount);
-                    Logging.Write("{0}{1} sells for {2}",
-                        itemInfo.Name,
-                        itemCount > 1 ? ("x" + itemCount) : "",
-                        sellValue);
-
-                    if (sellValue > bestValue)
-                    {
-                        bestName = itemInfo.Name;
-                        bestValue = sellValue;
-                        bestIndex = j;
-                    }
+                    bestName = itemInfo.Name;
+                    bestValue = sellValue;
+                    bestIndex = choice.Index;
                 }
             }
         }
 
         if (bestIndex == -1)
         {
-            Logging.Write("Selecting first reward as the QuestCache seems messed up and contains no questreward choices but we have questrewards to choose from.");
-            Lua.DoString("QuestInfoItem1:Click()");
-            return RunStatus.Success;
+            Logging.Write("Live quest reward choices have no usable item identity; deferring reward selection.");
+            return RunStatus.Failure;
         }
 
         Logging.Write("Choosing {0}", bestName);

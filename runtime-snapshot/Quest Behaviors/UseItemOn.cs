@@ -64,6 +64,13 @@ namespace Styx.Bot.Quest_Behaviors.UseItemOn
             None,
         }
 
+        public enum SuccessEvidenceType
+        {
+            InvocationCount,
+            ObjectiveProgress,
+            QuestComplete,
+        }
+
         public UseItemOn(Dictionary<string, string> args)
             : base(args)
         {
@@ -84,11 +91,22 @@ namespace Styx.Bot.Quest_Behaviors.UseItemOn
                 MobIds = GetNumberedAttributesAsArray<int>("MobId", 1, ConstrainAs.MobId, new[] { "NpcId" });
                 MobType = GetAttributeAsNullable<ObjectType>("MobType", false, null, new[] { "ObjectType" }) ?? ObjectType.Npc;
                 NumOfTimes = GetAttributeAsNullable<int>("NumOfTimes", false, ConstrainAs.RepeatCount, null) ?? 1;
+                SuccessEvidence = GetAttributeAsNullable<SuccessEvidenceType>("SuccessEvidence", false, null, null) ?? SuccessEvidenceType.InvocationCount;
+                ObjectiveIndex = GetAttributeAsNullable<int>("ObjectiveIndex", false, null, null) ?? -1;
+                MaxAttempts = GetAttributeAsNullable<int>("MaxAttempts", false, ConstrainAs.RepeatCount, null) ?? NumOfTimes;
+                AcknowledgementTimeout = GetAttributeAsNullable<int>("AcknowledgementTimeout", false, ConstrainAs.Milliseconds, null) ?? 5000;
+                SubmissionRefusalTimeout = GetAttributeAsNullable<int>("SubmissionRefusalTimeout", false, ConstrainAs.Milliseconds, null) ?? 5000;
+                if (SubmissionRefusalTimeout <= 0)
+                    IsAttributeProblem = true;
                 NpcState = GetAttributeAsNullable<NpcStateType>("MobState", false, null, new[] { "NpcState" }) ?? NpcStateType.DontCare;
                 NavigationState = GetAttributeAsNullable<NavigationType>("Nav", false, null, new[] { "Navigation" }) ?? NavigationType.Mesh;
                 WaitForNpcs = GetAttributeAsNullable<bool>("WaitForNpcs", false, null, null) ?? false;
                 Range = GetAttributeAsNullable<double>("Range", false, ConstrainAs.Range, null) ?? 4;
+                RequireLos = GetAttributeAsNullable<bool>("RequireLos", false, null, null) ?? false;
                 QuestId = GetAttributeAsNullable<int>("QuestId", false, ConstrainAs.QuestId(this), null) ?? 0;
+                if (SuccessEvidence == SuccessEvidenceType.ObjectiveProgress &&
+                    (QuestId <= 0 || ObjectiveIndex < 0 || ObjectiveIndex > 3))
+                    IsAttributeProblem = true;
                 QuestRequirementComplete = GetAttributeAsNullable<QuestCompleteRequirement>("QuestCompleteRequirement", false, null, null) ?? QuestCompleteRequirement.NotComplete;
                 QuestRequirementInLog = GetAttributeAsNullable<QuestInLogRequirement>("QuestInLogRequirement", false, null, null) ?? QuestInLogRequirement.InLog;
                 WaitTime = GetAttributeAsNullable<int>("WaitTime", false, ConstrainAs.Milliseconds, null) ?? 1500;
@@ -126,10 +144,18 @@ namespace Styx.Bot.Quest_Behaviors.UseItemOn
         public NpcStateType NpcState { get; private set; }
         public NavigationType NavigationState { get; private set; }
         public int NumOfTimes { get; private set; }
+        public SuccessEvidenceType SuccessEvidence { get; private set; }
+        public int ObjectiveIndex { get; private set; }
+        public int MaxAttempts { get; private set; }
+        public int AcknowledgementTimeout { get; private set; }
+        public int SubmissionRefusalTimeout { get; private set; }
+        public int? InitialObjectiveCount { get; private set; }
+        public bool AuthoritativeAttemptsExhausted { get; private set; }
         public int QuestId { get; private set; }
         public QuestCompleteRequirement QuestRequirementComplete { get; private set; }
         public QuestInLogRequirement QuestRequirementInLog { get; private set; }
         public double Range { get; private set; }
+        public bool RequireLos { get; private set; }
         public bool WaitForNpcs { get; private set; }
         public int WaitTime { get; private set; }
         public bool IgnoreMobsInBlackspots { get; private set; }
@@ -142,10 +168,100 @@ namespace Styx.Bot.Quest_Behaviors.UseItemOn
         private readonly List<ulong> _npcAuraWait = new List<ulong>();
         private readonly List<ulong> _npcBlacklist = new List<ulong>();
         private Composite _root;
+        private long _lastSubmissionUtc = -1;
+        private long _submissionRefusalUtc = -1;
 
         // Private properties
         private int Counter { get; set; }
         private LocalPlayer Me { get { return (ObjectManager.Me); } }
+
+        internal static bool IsAuthoritativeAcknowledged(
+            SuccessEvidenceType evidence,
+            int baseline,
+            int? currentCount,
+            bool questComplete)
+        {
+            if (evidence == SuccessEvidenceType.ObjectiveProgress)
+                return currentCount.HasValue && currentCount.Value > baseline;
+            if (evidence == SuccessEvidenceType.QuestComplete)
+                return questComplete;
+            // InvocationCount is legacy local bookkeeping, never server acknowledgement.
+            return false;
+        }
+
+        internal static bool IsAcknowledgementPending(
+            long nowUtcMilliseconds,
+            long submittedUtcMilliseconds,
+            int timeoutMilliseconds)
+        {
+            if (submittedUtcMilliseconds < 0 || timeoutMilliseconds <= 0 ||
+                nowUtcMilliseconds < submittedUtcMilliseconds)
+                return false;
+
+            return nowUtcMilliseconds - submittedUtcMilliseconds < timeoutMilliseconds;
+        }
+
+        private static long UtcNowMilliseconds()
+        {
+            return DateTime.UtcNow.Ticks / TimeSpan.TicksPerMillisecond;
+        }
+
+        private RunStatus DeferAuthoritativeAttempt(string reason)
+        {
+            LogMessage("warning",
+                "UseItemOn is deferring without authoritative {0} acknowledgement for quest {1}: {2}",
+                SuccessEvidence, QuestId, reason);
+            _isBehaviorDone = true;
+            return RunStatus.Success;
+        }
+
+        private RunStatus DeferSubmissionRefusal(string reason)
+        {
+            LogMessage("warning",
+                "UseItemOn is deferring because the container item submission could not be safely validated for quest {0}: {1}",
+                QuestId, reason);
+            _isBehaviorDone = true;
+            return RunStatus.Success;
+        }
+
+        private int? ReadObjectiveCount()
+        {
+            if (QuestId <= 0 || ObjectiveIndex < 0 || ObjectiveIndex > 3)
+                return null;
+            var player = Me;
+            PlayerQuest quest = player?.QuestLog?.GetQuestById((uint)QuestId);
+            if (quest == null || !quest.GetData(out QuestDescriptorData data) ||
+                data.ObjectivesDone == null || ObjectiveIndex >= data.ObjectivesDone.Length)
+                return null;
+            return data.ObjectivesDone[ObjectiveIndex];
+        }
+
+        private bool HasAuthoritativeSuccess()
+        {
+            if (SuccessEvidence == SuccessEvidenceType.InvocationCount)
+                return false;
+
+            bool questComplete = QuestId > 0 &&
+                UtilIsProgressRequirementsMet(
+                    QuestId,
+                    QuestInLogRequirement.InLog,
+                    QuestCompleteRequirement.Complete);
+
+            if (SuccessEvidence == SuccessEvidenceType.QuestComplete)
+                return IsAuthoritativeAcknowledged(SuccessEvidence, 0, null, questComplete);
+
+            if (SuccessEvidence == SuccessEvidenceType.ObjectiveProgress && QuestId > 0 &&
+                QuestObjectiveCompletion.IsNormalObjectiveComplete(
+                    Me?.QuestLog?.GetQuestById((uint)QuestId), ObjectiveIndex))
+                return true;
+
+            return InitialObjectiveCount.HasValue &&
+                IsAuthoritativeAcknowledged(
+                    SuccessEvidence,
+                    InitialObjectiveCount.Value,
+                    ReadObjectiveCount(),
+                    questComplete);
+        }
 
         // DON'T EDIT THESE--they are auto-populated by Subversion
         public override string SubversionId { get { return ("$Id: UseItemOn.cs 229 2012-04-25 01:57:29Z natfoth $"); } }
@@ -209,12 +325,16 @@ namespace Styx.Bot.Quest_Behaviors.UseItemOn
         {
             get
             {
+                var me = Me;
+                if (me == null || !me.IsValid || !me.IsAlive)
+                    return null;
                 WoWObject @object = null;
 
                 switch (MobType)
                 {
                     case ObjectType.GameObject:
-                        @object = ObjectManager.GetObjectsOfType<WoWGameObject>()
+                        @object = (ObjectManager.GetObjectsOfType<WoWGameObject>() ?? Enumerable.Empty<WoWGameObject>())
+                                                .Where(obj => obj != null && obj.IsValid && obj.Guid != 0)
                                                 .OrderBy(ret => ret.Distance)
                                                 .FirstOrDefault(obj => !_npcBlacklist.Contains(obj.Guid)
                                                                         && obj.Distance < CollectionDistance
@@ -222,16 +342,16 @@ namespace Styx.Bot.Quest_Behaviors.UseItemOn
                         break;
 
                     case ObjectType.Npc:
-                        var baseTargets = ObjectManager.GetObjectsOfType<WoWUnit>()
+                        var baseTargets = (ObjectManager.GetObjectsOfType<WoWUnit>() ?? Enumerable.Empty<WoWUnit>())
+                                                               .Where(target => target != null && target.IsValid && target.Guid != 0)
                                                                .OrderBy(target => target.Distance)
                                                                .Where(target => !_npcBlacklist.Contains(target.Guid) && !BehaviorBlacklist.Contains(target.Guid)
                                                                                 && (target.Distance < CollectionDistance)
                                                                                 && MobIds.Contains((int)target.Entry) && (!IgnoreMobsInBlackspots || (IgnoreMobsInBlackspots && !Targeting.IsTooNearBlackspot(ProfileManager.CurrentProfile.Blackspots, target.Location))));
 
                         var auraQualifiedTargets = baseTargets
-                                                            .Where(target => (((MobAuraName == null) && (MobAuraMissingName == null))
-                                                                              || ((MobAuraName != null) && target.HasAura(MobAuraName))
-                                                                              || ((MobAuraMissingName != null) && !target.HasAura(MobAuraMissingName))));
+                                                            .Where(target => (MobAuraName == null || target.HasAura(MobAuraName))
+                                                                              && (MobAuraMissingName == null || !target.HasAura(MobAuraMissingName)));
 
                         var npcStateQualifiedTargets = auraQualifiedTargets
                                                             .Where(target => ((NpcState == NpcStateType.DontCare)
@@ -285,8 +405,142 @@ namespace Styx.Bot.Quest_Behaviors.UseItemOn
         {
             get
             {
-                return StyxWoW.Me.CarriedItems.FirstOrDefault(ret => ret.Entry == ItemId);
+                var me = StyxWoW.Me;
+                if (me == null || !me.IsValid || !me.IsAlive)
+                    return null;
+                return me.CarriedItems?.FirstOrDefault(item => item != null && item.IsValid && item.Entry == ItemId);
             }
+        }
+
+        // One attempted use owns one actor, inventory item and recipient. Setup
+        // callbacks must not silently substitute another same-entry object/item.
+        private RunStatus UseCapturedItem()
+        {
+            var player = Me;
+            var recipient = CurrentObject;
+            var item = Item;
+            // This branch already admitted an attempt. On revocation, consume
+            // this tick without falling into the old roaming/waiting actions.
+            if (player == null || recipient == null || item == null)
+                return RunStatus.Success;
+
+            ulong playerGuid = player.Guid;
+            ulong recipientGuid = recipient.Guid;
+            ulong itemGuid = item.Guid;
+            uint recipientEntry = recipient.Entry;
+            bool targeted = false;
+
+            bool OwnsActorIdentity() => !_isDisposed && !_isBehaviorDone && playerGuid != 0
+                && ReferenceEquals(Me, player) && player.IsValid && player.IsAlive
+                && player.Guid == playerGuid;
+
+            // Quest acceptance/completion can change during setup or item use.
+            // Reuse the explicit profile's requirements, not a guessed recipe,
+            // and fence the observation with the same actor/lifetime checks.
+            bool OwnsActor() => OwnsActorIdentity()
+                && UtilIsProgressRequirementsMet(QuestId, QuestRequirementInLog, QuestRequirementComplete)
+                && OwnsActorIdentity();
+
+            bool Admitted(bool requireSelectedTarget)
+            {
+                if (!OwnsActor() || recipientGuid == 0 || itemGuid == 0
+                    || !recipient.IsValid || recipient.Guid != recipientGuid || recipient.Entry != recipientEntry
+                    || !item.IsValid || item.Guid != itemGuid || item.Entry != ItemId || item.Cooldown != 0
+                    || player.CarriedItems == null || !player.CarriedItems.Any(candidate => ReferenceEquals(candidate, item))
+                    || !(ObjectManager.GetObjectsOfType<WoWObject>()?.Any(candidate => ReferenceEquals(candidate, recipient)) ?? false)
+                    || MobIds == null || !MobIds.Contains((int)recipientEntry) || _npcBlacklist.Contains(recipientGuid))
+                    return false;
+
+                double distance = recipient.DistanceSqr;
+                if (double.IsNaN(distance) || double.IsInfinity(distance)
+                    || !(distance <= Range * Range) || !(distance < CollectionDistance * CollectionDistance))
+                    return false;
+                if (RequireLos && !recipient.InLineOfSight)
+                    return false;
+
+                if (MobType == ObjectType.GameObject)
+                {
+                    if (!(recipient is WoWGameObject)) return false;
+                }
+                else if (MobType == ObjectType.Npc && recipient is WoWUnit unit)
+                {
+                    if (BehaviorBlacklist.Contains(recipientGuid)
+                        || (MobAuraName != null && !unit.HasAura(MobAuraName))
+                        || (MobAuraMissingName != null && unit.HasAura(MobAuraMissingName))
+                        || !(NpcState == NpcStateType.DontCare
+                            || NpcState == NpcStateType.Dead && unit.Dead
+                            || NpcState == NpcStateType.Alive && unit.IsAlive
+                            || NpcState == NpcStateType.BelowHp && unit.IsAlive && unit.HealthPercent < MobHpPercentLeft)
+                        || IgnoreMobsInBlackspots && Targeting.IsTooNearBlackspot(ProfileManager.CurrentProfile.Blackspots, unit.Location)
+                        || requireSelectedTarget && (!ReferenceEquals(player.CurrentTarget, unit)
+                            || player.CurrentTarget.Guid != recipientGuid))
+                        return false;
+                }
+                else return false;
+                // Generic container use is merchant-sensitive. Defer the attempt,
+                // without closing another owner's UI or recording false progress.
+                return !Styx.Logic.Inventory.Frames.Merchant.MerchantFrame.Instance.IsVisible
+                    && OwnsActor();
+            }
+
+            if (!Admitted(false)) return RunStatus.Success;
+            if (player.IsMoving)
+            {
+                WoWMovement.MoveStop();
+                if (!Admitted(false)) return RunStatus.Success;
+                StyxWoW.SleepForLagDuration();
+                if (!Admitted(false)) return RunStatus.Success;
+            }
+            TreeRoot.StatusText = "Using item on \"" + recipient.Name + "\"";
+            if (!Admitted(false)) return RunStatus.Success;
+            if (recipient is WoWUnit target && !ReferenceEquals(player.CurrentTarget, target))
+            {
+                target.Target();
+                targeted = true;
+                if (!Admitted(true)) return RunStatus.Success;
+                StyxWoW.SleepForLagDuration();
+            }
+            if (!Admitted(true)) return RunStatus.Success;
+            WoWMovement.Face(recipientGuid);
+            if (!Admitted(true) || HasAuthoritativeSuccess()) return RunStatus.Success;
+            if (!item.TryUseContainerItem())
+            {
+                long now = UtcNowMilliseconds();
+                if (_submissionRefusalUtc < 0)
+                    _submissionRefusalUtc = now;
+
+                if (IsAcknowledgementPending(
+                        now,
+                        _submissionRefusalUtc,
+                        SubmissionRefusalTimeout))
+                {
+                    TreeRoot.StatusText =
+                        "Waiting for a stable container item slot before submission";
+                    return RunStatus.Success;
+                }
+
+                return DeferSubmissionRefusal(
+                    "the item GUID/slot identity did not stabilize within the bounded local submission window");
+            }
+
+            _submissionRefusalUtc = -1;
+            if (SuccessEvidence != SuccessEvidenceType.InvocationCount)
+                _lastSubmissionUtc = UtcNowMilliseconds();
+
+            // Invocation is not server quest credit. Retain the legacy local
+            // repetition count, but never write into a disposed/replaced actor's
+            // continuation. A legitimately consumed item need not remain in bags.
+            if (!OwnsActor()) return RunStatus.Success;
+            _npcBlacklist.Add(recipientGuid);
+            Counter++;
+            StyxWoW.SleepForLagDuration();
+            if (!OwnsActor()) return RunStatus.Success;
+            if (WaitTime < 100) WaitTime = 100;
+            if (WaitTime > 100 && targeted && ReferenceEquals(player.CurrentTarget, recipient)
+                && player.CurrentTarget.Guid == recipientGuid)
+                player.ClearTarget();
+            if (OwnsActor()) Thread.Sleep(WaitTime);
+            return RunStatus.Success;
         }
 
         #region Overrides of CustomForcedBehavior
@@ -296,11 +550,66 @@ namespace Styx.Bot.Quest_Behaviors.UseItemOn
             return _root ?? (_root =
             new PrioritySelector(
 
-                new Decorator(ret => Counter >= NumOfTimes,
+                new Decorator(
+                    ret => SuccessEvidence == SuccessEvidenceType.InvocationCount && Counter >= NumOfTimes,
                     new Action(ret => _isBehaviorDone = true)),
 
+                new Decorator(
+                    ret => SuccessEvidence != SuccessEvidenceType.InvocationCount && HasAuthoritativeSuccess(),
+                    new Action(ret => _isBehaviorDone = true)),
+
+                new Decorator(
+                    ret => SuccessEvidence != SuccessEvidenceType.InvocationCount &&
+                           IsAcknowledgementPending(
+                               UtcNowMilliseconds(),
+                               _lastSubmissionUtc,
+                               AcknowledgementTimeout),
+                    new Action(ret =>
+                    {
+                        TreeRoot.StatusText = "Waiting for authoritative quest acknowledgement";
+                        return RunStatus.Running;
+                    })),
+
+                new Decorator(
+                    ret => SuccessEvidence != SuccessEvidenceType.InvocationCount &&
+                           _lastSubmissionUtc >= 0 &&
+                           !IsAcknowledgementPending(
+                               UtcNowMilliseconds(),
+                               _lastSubmissionUtc,
+                               AcknowledgementTimeout) &&
+                           Item == null,
+                    new Action(ret => DeferAuthoritativeAttempt(
+                        "the submitted item is no longer available after the bounded acknowledgement window"))),
+
+                new Decorator(
+                    ret => SuccessEvidence != SuccessEvidenceType.InvocationCount &&
+                           (SuccessEvidence != SuccessEvidenceType.ObjectiveProgress || InitialObjectiveCount.HasValue) &&
+                           Counter >= MaxAttempts,
+                    new Action(ret =>
+                    {
+                        AuthoritativeAttemptsExhausted = true;
+                        LogMessage("warning",
+                            "UseItemOn exhausted {0} bounded attempt(s) without authoritative {1} acknowledgement for quest {2}; deferring.",
+                            MaxAttempts, SuccessEvidence, QuestId);
+                        _isBehaviorDone = true;
+                        return RunStatus.Success;
+                    })),
+
+                new Decorator(
+                    ret => SuccessEvidence == SuccessEvidenceType.ObjectiveProgress && !InitialObjectiveCount.HasValue,
+                    new Action(ret =>
+                    {
+                        LogMessage("warning",
+                            "UseItemOn cannot establish the initial objective count for quest {0} objective {1}; deferring without item use.",
+                            QuestId, ObjectiveIndex);
+                        _isBehaviorDone = true;
+                        return RunStatus.Success;
+                    })),
+
                     new PrioritySelector(
-                        new Decorator(ret => CurrentObject != null && CurrentObject.DistanceSqr > Range * Range,
+                        new Decorator(ret => CurrentObject != null &&
+                            (CurrentObject.DistanceSqr > Range * Range ||
+                             RequireLos && !CurrentObject.InLineOfSight),
                             new Switch<NavigationType>(ret => NavigationState,
                                 new SwitchArgument<NavigationType>(
                                     NavigationType.CTM,
@@ -322,44 +631,7 @@ namespace Styx.Bot.Quest_Behaviors.UseItemOn
                                     )))),
 
                         new Decorator(ret => CurrentObject != null && CurrentObject.DistanceSqr <= Range * Range && Item != null && Item.Cooldown == 0,
-                            new Sequence(
-                                new DecoratorContinue(ret => StyxWoW.Me.IsMoving,
-                                    new Action(ret =>
-                                    {
-                                        WoWMovement.MoveStop();
-                                        StyxWoW.SleepForLagDuration();
-                                    })),
-
-                                new Action(ret =>
-                                {
-                                    bool targeted = false;
-                                    TreeRoot.StatusText = "Using item on \"" + CurrentObject.Name + "\"";
-                                    if (CurrentObject is WoWUnit && (StyxWoW.Me.CurrentTarget == null || StyxWoW.Me.CurrentTarget != CurrentObject))
-                                    {
-                                        (CurrentObject as WoWUnit).Target();
-                                        targeted = true;
-                                        StyxWoW.SleepForLagDuration();
-                                    }
-
-                                    WoWMovement.Face(CurrentObject.Guid);
-
-                                    Item.UseContainerItem();
-                                    _npcBlacklist.Add(CurrentObject.Guid);
-
-                                    StyxWoW.SleepForLagDuration();
-                                    Counter++;
-
-                                    if (WaitTime < 100)
-                                        WaitTime = 100;
-
-                                    if (WaitTime > 100)
-                                    {
-                                        if (targeted)
-                                            StyxWoW.Me.ClearTarget();
-                                    }
-
-                                    Thread.Sleep(WaitTime);
-                                }))
+                            new Action(ret => UseCapturedItem())
                                     ),
 
                             new Decorator(
@@ -388,7 +660,8 @@ namespace Styx.Bot.Quest_Behaviors.UseItemOn
         {
             get
             {
-                return (_isBehaviorDone     // normal completion
+                return (_isBehaviorDone     // local execution completion/deferral
+                        || (SuccessEvidence != SuccessEvidenceType.InvocationCount && HasAuthoritativeSuccess())
                         || !UtilIsProgressRequirementsMet(QuestId, QuestRequirementInLog, QuestRequirementComplete));
             }
         }
@@ -399,6 +672,12 @@ namespace Styx.Bot.Quest_Behaviors.UseItemOn
             // We had to defer this action, as the 'profile line number' is not available during the element's
             // constructor call.
             OnStart_HandleAttributeProblem();
+
+            _lastSubmissionUtc = -1;
+            _submissionRefusalUtc = -1;
+
+            if (!IsAttributeProblem && SuccessEvidence == SuccessEvidenceType.ObjectiveProgress)
+                InitialObjectiveCount = ReadObjectiveCount();
 
             // If the quest is complete, this behavior is already done...
             // So we don't want to falsely inform the user of things that will be skipped.

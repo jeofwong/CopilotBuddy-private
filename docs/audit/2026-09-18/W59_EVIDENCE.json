@@ -1,0 +1,161 @@
+{
+  "schema": 1,
+  "repository": "jeofwong/CopilotBuddy-private",
+  "pr": 51,
+  "code": "ee31cde9985f233fb7c085160a50c05c54650ea0",
+  "tree": "cbe514baa03078eadc4be4a3300e556f2cb4d6b5",
+  "artifacts": [
+    {
+      "phase": "fixture-mount-ambiguity",
+      "file": "w59-combat-red-f8e47ea5.zip",
+      "commit": "f8e47ea5d7509ea1035549a406849e568e5c2e64",
+      "run_id": 35301569531,
+      "artifact_id": 10529523657,
+      "sha256": "7809cf29c54e082edb98cd0697893d278c768e2888e6a846ba85cc9fbd844833"
+    },
+    {
+      "phase": "merchant-red-combat-fixture-error",
+      "file": "w59-merchant-red-0268828a.zip",
+      "commit": "0268828a282d3a4c25e2bee7cc74e7bd825517d4",
+      "run_id": 35301798787,
+      "artifact_id": 10530247821,
+      "sha256": "78b196d90735139ce936c0eaf854d220ab73695edec4142efff43a6bae751143"
+    },
+    {
+      "phase": "both-assertion-red",
+      "file": "w59-combined-red-cac8a01d.zip",
+      "commit": "cac8a01d2538ff806dfe2307948c323c6a151df1",
+      "run_id": 35302175695,
+      "artifact_id": 10529449520,
+      "sha256": "d9229e00e38b691185f24b8ffd94120fdcce3d4b32933fa2fc73bd3b34b0cd1b"
+    },
+    {
+      "phase": "merchant-green-combat-red",
+      "file": "w59-merchant-green-a89c10ba.zip",
+      "commit": "a89c10baee66f2fcc8792381e9ffa82dd65ce191",
+      "run_id": 35302520973,
+      "artifact_id": 10530044464,
+      "sha256": "58697894c1a07a59ba8b243017860ec921dc11070611cf8371aedc2bfa202d87"
+    },
+    {
+      "phase": "both-green",
+      "file": "w59-integrated-green-ee31cde9.zip",
+      "commit": "ee31cde9985f233fb7c085160a50c05c54650ea0",
+      "run_id": 35303475446,
+      "artifact_id": 10531141312,
+      "sha256": "46e63f40c51f2c6c893f4abdd4d0e9c1418dcbcc19b0a8a1e54cb869f40e5fce"
+    },
+    {
+      "phase": "host-green",
+      "file": "w59-host-green-ee31cde9.zip",
+      "commit": "ee31cde9985f233fb7c085160a50c05c54650ea0",
+      "run_id": 35303475426,
+      "artifact_id": 10531046186,
+      "sha256": "7265d4ef6f8e06c117969f3b9bb55105ab7383fd3136979eeb35002ef75c9c80"
+    }
+  ],
+  "new_case_results": {
+    "red": {
+      "combat": {
+        "passed": 11,
+        "total": 26,
+        "assertions": 15,
+        "unexpected": 0
+      },
+      "merchant": {
+        "passed": 7,
+        "total": 20,
+        "assertions": 13,
+        "unexpected": 0
+      },
+      "progress": {
+        "passed": 33,
+        "total": 33,
+        "assertions": 0,
+        "unexpected": 0
+      }
+    },
+    "intermediate": {
+      "combat": {
+        "passed": 11,
+        "total": 26,
+        "assertions": 15,
+        "unexpected": 0
+      },
+      "merchant": {
+        "passed": 20,
+        "total": 20,
+        "assertions": 0,
+        "unexpected": 0
+      },
+      "progress": {
+        "passed": 33,
+        "total": 33,
+        "assertions": 0,
+        "unexpected": 0
+      }
+    },
+    "green": {
+      "combat": {
+        "passed": 26,
+        "total": 26,
+        "assertions": 0,
+        "unexpected": 0
+      },
+      "merchant": {
+        "passed": 20,
+        "total": 20,
+        "assertions": 0,
+        "unexpected": 0
+      },
+      "progress": {
+        "passed": 33,
+        "total": 33,
+        "assertions": 0,
+        "unexpected": 0
+      }
+    }
+  },
+  "red_green_pairs": [
+    {
+      "only_changed_input": "runtime-snapshot/Quest Behaviors/UseItemOn.cs",
+      "identical_normalized_members": 103,
+      "other_group_outcomes_identical": 90
+    },
+    {
+      "only_changed_input": "Bots/Grind/LevelBot.cs",
+      "identical_normalized_members": 103,
+      "other_group_outcomes_identical": 90
+    }
+  ],
+  "aggregate_groups": 91,
+  "normalized_members": 103,
+  "manifest_entries_per_clean_archive": 147,
+  "input_hash_index_entries": 1777,
+  "source_bindings_git_blobs": {
+    "before": "fcc02655cb9c8f9c5bfb4488206abcf3f726a8ef",
+    "after": "e91f274cc2ff443979512722be7cb11bd785f6ac"
+  },
+  "included_original_tests": 2,
+  "host": {
+    "host_build_exit_code": 0,
+    "game_attached": false,
+    "tests_run": false,
+    "warnings": 3292,
+    "errors": 0
+  },
+  "new_native_writes": true,
+  "new_windows_execution": true,
+  "independent_review": false,
+  "live_server_acceptance": false,
+  "automatic_quest_recipes_implemented": false,
+  "exhaustive_audit_complete": false,
+  "scope": "Whole ZIP SHA256/CRC and complete internal manifests verified. All input hash indexes compared, not all 1777 source files independently downloaded. Two included LevelBot snapshots and two exact original tests bound to CI input hashes. Includes genuine earlier fixture failures.",
+  "normalizer_and_workflows_changed": false,
+  "native_blobs": {
+    "UseItemOn.cs": "289ead9683ec459052263cc145dd9d9e38f0c11e",
+    "CombatTargetGapRegressionTests.cs": "5efebc6604c15935bb1bf0b2674aa808524e728e",
+    "QuestItemMerchantContextRegressionTests.cs": "9eec2bd26ba52dfa315056ac8d3967a54a0d4d09"
+  },
+  "integration_entries_passed": 17
+}

@@ -15,6 +15,17 @@ namespace MrItemRemover2
 {
     public partial class MrItemRemover2
     {
+        private static readonly TimeSpan DeleteTimeout = TimeSpan.FromSeconds(10);
+        private static ulong _pendingDeleteGuid;
+        private static uint _pendingDeleteEntry;
+        private static DateTime _pendingDeleteSince;
+        private static bool _pendingDeleteRequested;
+
+        private static bool HasPendingDelete
+        {
+            get { return _pendingDeleteGuid != 0 && _pendingDeleteEntry != 0; }
+        }
+
         public void SellVenderItems(object sender, LuaEventArgs args)
         {
             if (MerchantFrame.Instance.IsVisible && IsInitialized &&
@@ -136,13 +147,201 @@ namespace MrItemRemover2
 
         private static void DeleteItemConfirmPopup(object sender, LuaEventArgs args)
         {
-            string itemNamePopUp = args.Args[0].ToString();
+            if (!HasPendingDelete)
+                return;
 
-            if (Me.CurrentTarget != null)
+            try
             {
-                Slog("Clicking Yes to Comfirm {0}'s Removal From Inventory", itemNamePopUp);
-                Lua.DoString("RunMacroText(\"/click StaticPopup1Button1\");");
+                int popup = Lua.GetReturnVal<int>(
+                    "local good=StaticPopup_FindVisible('DELETE_GOOD_ITEM'); " +
+                    "if good and good.which=='DELETE_GOOD_ITEM' then return 2 end; " +
+                    "local normal=StaticPopup_FindVisible('DELETE_ITEM'); " +
+                    "if normal and normal.which=='DELETE_ITEM' then return 1 end; return 0", 0U);
+                if (popup == 0)
+                    return;
+
+                int confirmation = TryConfirmPendingDelete();
+                if (confirmation > 0)
+                    Slog("Confirming owned removal for item entry {0}", _pendingDeleteEntry);
             }
+            catch (Exception error)
+            {
+                Dlog("Delete confirmation event failed safely: {0}", error.Message);
+            }
+        }
+
+        private static void BeginDelete(WoWItem item)
+        {
+            if (HasPendingDelete || item == null || !item.IsValid ||
+                item.Guid == 0 || item.Entry == 0)
+                return;
+
+            ulong expectedGuid = item.Guid;
+            uint expectedEntry = item.Entry;
+            if (!item.TryPickUp())
+            {
+                Dlog("Delete pickup refused for {0} ({1}); cursor/slot ownership was not changed.",
+                    item.Name, expectedEntry);
+                return;
+            }
+
+            _pendingDeleteGuid = expectedGuid;
+            _pendingDeleteEntry = expectedEntry;
+            _pendingDeleteSince = DateTime.UtcNow;
+            _pendingDeleteRequested = false;
+            TryIssueDeleteRequest();
+        }
+
+        private static void TickPendingDelete()
+        {
+            if (!HasPendingDelete)
+                return;
+
+            if (DateTime.UtcNow - _pendingDeleteSince >= DeleteTimeout)
+            {
+                Slog("Delete transaction for entry {0} timed out; cursor ownership is left untouched.",
+                    _pendingDeleteEntry);
+                ResetPendingDelete();
+                return;
+            }
+
+            int cursorState = ReadOwnedCursorState(_pendingDeleteEntry);
+            if (cursorState == 0)
+            {
+                if (!PendingDeleteItemStillObserved())
+                {
+                    Slog("Confirmed removal of item {0} ({1}).",
+                        _pendingDeleteGuid, _pendingDeleteEntry);
+                    ResetPendingDelete();
+                    return;
+                }
+
+                Dlog("Item {0} ({1}) returned to inventory; retry will require a fresh pickup.",
+                    _pendingDeleteGuid, _pendingDeleteEntry);
+                ResetPendingDelete();
+                return;
+            }
+
+            if (cursorState != 1)
+                return;
+
+            if (!_pendingDeleteRequested)
+                TryIssueDeleteRequest();
+            else
+                TryConfirmPendingDelete();
+        }
+
+        private static bool PendingDeleteItemStillObserved()
+        {
+            if (!HasPendingDelete)
+                return false;
+
+            if (Me != null && Me.BagItems != null &&
+                Me.BagItems.Any(item => item != null && item.Guid == _pendingDeleteGuid))
+                return true;
+
+            WoWItem candidate = ObjectManager.GetObjectByGuid<WoWItem>(_pendingDeleteGuid);
+            return candidate != null && candidate.IsValid;
+        }
+
+        private static int ReadOwnedCursorState(uint expectedEntry)
+        {
+            if (expectedEntry == 0)
+                return 2;
+
+            string lua = string.Format(
+                CultureInfo.InvariantCulture,
+                "local cursorType,cursorItemId=GetCursorInfo(); " +
+                "if not cursorType then return 0 end; " +
+                "if cursorType=='item' and CursorHasItem() and tonumber(cursorItemId)=={0} then return 1 end; " +
+                "return 2",
+                expectedEntry);
+            try
+            {
+                return Lua.GetReturnVal<int>(lua, 0U);
+            }
+            catch
+            {
+                return 2;
+            }
+        }
+
+        private static void TryIssueDeleteRequest()
+        {
+            if (!HasPendingDelete)
+                return;
+
+            try
+            {
+                bool submitted = Lua.GetReturnVal<bool>(
+                    BuildOwnedDeleteRequestLua(_pendingDeleteEntry), 0U);
+                if (submitted)
+                    _pendingDeleteRequested = true;
+            }
+            catch (Exception error)
+            {
+                Dlog("Owned delete request failed safely: {0}", error.Message);
+            }
+        }
+
+        private static int TryConfirmPendingDelete()
+        {
+            if (!HasPendingDelete)
+                return 0;
+
+            try
+            {
+                return Lua.GetReturnVal<int>(
+                    BuildOwnedDeleteConfirmationLua(_pendingDeleteEntry), 0U);
+            }
+            catch (Exception error)
+            {
+                Dlog("Owned delete confirmation failed safely: {0}", error.Message);
+                return 0;
+            }
+        }
+
+        private static string BuildOwnedDeleteRequestLua(uint expectedEntry)
+        {
+            if (expectedEntry == 0)
+                throw new ArgumentOutOfRangeException("expectedEntry");
+
+            return string.Format(
+                CultureInfo.InvariantCulture,
+                "local cursorType,cursorItemId=GetCursorInfo(); " +
+                "if cursorType~='item' or not CursorHasItem() or tonumber(cursorItemId)~={0} then return false end; " +
+                "if StaticPopup_FindVisible('DELETE_ITEM') or StaticPopup_FindVisible('DELETE_GOOD_ITEM') then return false end; " +
+                "DeleteCursorItem(); return true",
+                expectedEntry);
+        }
+
+        private static string BuildOwnedDeleteConfirmationLua(uint expectedEntry)
+        {
+            if (expectedEntry == 0)
+                throw new ArgumentOutOfRangeException("expectedEntry");
+
+            return string.Format(
+                CultureInfo.InvariantCulture,
+                "local cursorType,cursorItemId=GetCursorInfo(); " +
+                "if cursorType~='item' or not CursorHasItem() or tonumber(cursorItemId)~={0} then return 0 end; " +
+                "local good=StaticPopup_FindVisible('DELETE_GOOD_ITEM'); " +
+                "if good and good.which=='DELETE_GOOD_ITEM' then " +
+                " if not good.editBox or not good.button1 then return -1 end; " +
+                " good.editBox:SetText(DELETE_ITEM_CONFIRM_STRING); " +
+                " if good.button1:IsEnabled()==1 then good.button1:Click(); return 2 end; return 1 end; " +
+                "local normal=StaticPopup_FindVisible('DELETE_ITEM'); " +
+                "if normal and normal.which=='DELETE_ITEM' then " +
+                " if not normal.button1 then return -1 end; normal.button1:Click(); return 2 end; " +
+                "return 0",
+                expectedEntry);
+        }
+
+        private static void ResetPendingDelete()
+        {
+            _pendingDeleteGuid = 0;
+            _pendingDeleteEntry = 0;
+            _pendingDeleteSince = DateTime.MinValue;
+            _pendingDeleteRequested = false;
         }
 
         public void PrintSettings()
@@ -161,6 +360,12 @@ namespace MrItemRemover2
 
         public void CheckForItems()
         {
+            if (HasPendingDelete)
+            {
+                TickPendingDelete();
+                return;
+            }
+
             //Added to Make sure our list matches what we are looking for. 
             LoadList(ItemName, _removeListPath);
             LoadList(BagList, _bagListPath);
@@ -238,9 +443,8 @@ namespace MrItemRemover2
                     if (!KeepList.Contains(item.Name) && FoodList.Contains(item.Name))
                     {
                         Slog("{0} was in the Food List and We want to Remove Food. Removing.", item.Name);
-                        Lua.DoString("ClearCursor()");
-                        item.PickUp();
-                        Lua.DoString("DeleteCursorItem()");
+                        BeginDelete(item);
+                        return;
                     }
                 }
 
@@ -250,9 +454,8 @@ namespace MrItemRemover2
                     if (!KeepList.Contains(item.Name) && DrinkList.Contains(item.Name))
                     {
                         Slog("{0} was in the Drink List and We want to Remove Drinks. Removing.", item.Name);
-                        Lua.DoString("ClearCursor()");
-                        item.PickUp();
-                        Lua.DoString("DeleteCursorItem()");
+                        BeginDelete(item);
+                        return;
                     }
                 }
 
@@ -262,8 +465,8 @@ namespace MrItemRemover2
                     //probally not needed, but still user could be messing with thier inventory.
                     //Printing to the log, and Deleting the Item.
                     Slog("{0} Found Removing Item", item.Name);
-                    item.PickUp();
-                    Lua.DoString("DeleteCursorItem()");
+                    BeginDelete(item);
+                    return;
                     //a small Sleep, might not be needed. 
                 }
 
@@ -271,8 +474,8 @@ namespace MrItemRemover2
                     !KeepList.Contains(item.Name))
                 {
                     Slog("{0}'s Began a Quest. Removing", item.Name);
-                    item.PickUp();
-                    Lua.DoString("DeleteCursorItem()");
+                    BeginDelete(item);
+                    return;
                 }
 
                 
@@ -298,9 +501,8 @@ namespace MrItemRemover2
                     {
                         Slog("{0}'s Item Quality was Poor and only worth {1} copper. Removing.", item.Name,
                             item.ItemInfo.SellPrice);
-                        Lua.DoString("ClearCursor()");
-                        item.PickUp();
-                        Lua.DoString("DeleteCursorItem()");
+                        BeginDelete(item);
+                        return;
                     }
                 }
 
@@ -312,9 +514,8 @@ namespace MrItemRemover2
                         !DrinkList.Contains(item.Name))
                     {
                         Slog("{0}'s Item Quality was Common. Removing.", item.Name);
-                        Lua.DoString("ClearCursor()");
-                        item.PickUp();
-                        Lua.DoString("DeleteCursorItem()");
+                        BeginDelete(item);
+                        return;
                     }
                 }
 
@@ -325,9 +526,8 @@ namespace MrItemRemover2
                         !KeepList.Contains(item.Name) && !BagList.Contains(item.Name))
                     {
                         Slog("{0}'s Item Quality was Uncommon. Removing.", item.Name);
-                        Lua.DoString("ClearCursor()");
-                        item.PickUp();
-                        Lua.DoString("DeleteCursorItem()");
+                        BeginDelete(item);
+                        return;
                     }
                 }
 
@@ -338,9 +538,8 @@ namespace MrItemRemover2
                         !KeepList.Contains(item.Name) && !BagList.Contains(item.Name))
                     {
                         Slog("{0}'s Item Quality was Rare. Removing.", item.Name);
-                        Lua.DoString("ClearCursor()");
-                        item.PickUp();
-                        Lua.DoString("DeleteCursorItem()");
+                        BeginDelete(item);
+                        return;
                     }
                 }    
             }
@@ -369,18 +568,21 @@ namespace MrItemRemover2
 
         private bool IsQuestItem(WoWItem item)
         {
-            if ((item == null) || !item.IsValid)
+            if (item == null || !item.IsValid)
+                return true;
+
+            bool isQuestItem;
+            int questId;
+            bool isActive;
+            if (!item.TryGetContainerItemQuestInfo(
+                    out isQuestItem, out questId, out isActive))
             {
-                return false;
+                Dlog("Quest-item protection could not validate the current container slot for {0}; preserving item.",
+                    item.Name);
+                return true;
             }
 
-            string luaCommand = string.Format("return GetContainerItemQuestInfo({0},{1});", item.BagIndex + 1,
-                item.BagSlot + 1);
-            bool isQuestItem =
-                Lua.GetReturnVal<bool>(luaCommand, 0) // item is quest item?
-                || (Lua.GetReturnVal<int>(luaCommand, 1) > 0); // item begins a quest?
-
-            return isQuestItem;
+            return isQuestItem || questId > 0;
         }
     }
 }

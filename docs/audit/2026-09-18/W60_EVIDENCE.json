@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "repository": "jeofwong/CopilotBuddy-private",
+  "pr": 51,
+  "baseline": "0fa752da880c2a9a37b0efa3d268bc9353c669d9",
+  "test_only": "82ac2a091bce94aaae28a4ae184ed604b6e8c39d",
+  "verified_code": "6cd4f9f9a14fe03c1921f1e56824e6532d63318d",
+  "code_tree": "52d5010d490a0ad678f6e88690ae1db72dbf06ad",
+  "integrated": {
+    "run_id": 35306915012,
+    "artifact_id": 10532375902,
+    "sha256": "2b01ae9ad03e9cc27cd9e301a1f0e03a00fa212ecd75e3961916c2d0ec1d867c",
+    "entries_passed": 17,
+    "entries": 17,
+    "aggregate_groups": 91,
+    "new_python_tests": 41,
+    "all_analyzer_tests": 74,
+    "skipped_new_tests": 0,
+    "input_hash_index_entries": 1779,
+    "normalized_members": 103,
+    "manifest_entries": 147
+  },
+  "test_only_evidence": {
+    "run_id": 35306570163,
+    "artifact_id": 10532240617,
+    "sha256": "669290d8d85d40a571abf784a819a4ae75279444625ad3dde1f00e6c83f7ad9e",
+    "failed_entry": "Analyzers",
+    "failure": "ModuleNotFoundError: addon_evidence",
+    "kind": "new-module scaffold failure, not gameplay assertion red",
+    "other_entries_passed": 16
+  },
+  "retained_baseline": {
+    "run_id": 35303475446,
+    "artifact_id": 10531141312,
+    "sha256": "46e63f40c51f2c6c893f4abdd4d0e9c1418dcbcc19b0a8a1e54cb869f40e5fce",
+    "source_hash_index_entries_unchanged": 1777,
+    "aggregate_groups_unchanged": 91,
+    "normalized_members_unchanged": 103
+  },
+  "source_blobs": {
+    "test_addon_evidence.py": "b2d98f057409f13d60f57a677ebbb571f0f090cb",
+    "addon_evidence.py": "416b327bc142b1c4cfb5182fd62cbb5b8a106cb4"
+  },
+  "scope": {
+    "installed_windows_folder_read": false,
+    "third_party_lua_executed": false,
+    "third_party_database_copied": false,
+    "runtime_import_enabled": false,
+    "new_gameplay_changes": false,
+    "new_host_job_returned": false,
+    "live_server_acceptance": false,
+    "independent_approval": false,
+    "master_merge": false,
+    "exhaustive_complete": false
+  },
+  "integrity_scope": "Verified ZIP SHA256/CRC/full inner-manifest coverage. Compared complete input indexes; individually rehashed two included new source files. Not a full checkout or every source re-download."
+}

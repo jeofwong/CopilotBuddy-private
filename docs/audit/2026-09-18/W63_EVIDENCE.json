@@ -1,0 +1,98 @@
+{
+  "schema": 1,
+  "repository": "jeofwong/CopilotBuddy-private",
+  "pr": 51,
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "recovered_code": "847e9c3aba9c44a1f92d5c810afccdf372465fee",
+  "tree": "77203dccc6667610f39a3dd7b010f53ffacba021",
+  "prior_documentation": "ad4a1eb14377d1d727bbcc36eb10bdb2c41fdb45",
+  "recovered_commits": 16,
+  "current": {
+    "integrated_entries_pass": 17,
+    "aggregate_groups_pass": 99,
+    "new_case_groups": 7,
+    "new_cases_pass": 165,
+    "analyzer_tests_pass": 74,
+    "source_hash_index_entries": 1788,
+    "normalized_members": 111,
+    "inner_manifest_entries": 155,
+    "host_errors": 0,
+    "host_warnings": 3304
+  },
+  "artifacts": [
+    {
+      "phase": "baseline",
+      "commit": "a4d82ce7ff3cee703bc6e64fa521141fb2e04dc9",
+      "run_id": 35312015670,
+      "artifact_id": 10533840947,
+      "sha256": "3866cd3ea66c1cf5ada2b1a799fc8531ef26daad16cbf0e2c431a50e51a8aa39",
+      "manifest_members_verified": 148
+    },
+    {
+      "phase": "bulk_red",
+      "commit": "47de7d73bc5a8c7c9daa2ce01ab6e7da4c069e3b",
+      "run_id": 35320613811,
+      "artifact_id": 10536852081,
+      "sha256": "2bdbf9ebe82a075a87e9e5aa1685628f6e00ba505709ea9f543b87be29ff3a58",
+      "manifest_members_verified": 152
+    },
+    {
+      "phase": "current",
+      "commit": "847e9c3aba9c44a1f92d5c810afccdf372465fee",
+      "run_id": 35332335480,
+      "artifact_id": 10541791831,
+      "sha256": "1f8f7b1b0cccdbf7ec7a41f90eb7242542d94e5b323aa27e4e0dd5f1443e6515",
+      "manifest_members_verified": 155
+    },
+    {
+      "phase": "prerequisite_red",
+      "commit": "ba5308928743842e3e2ca45ab92a0765ce0e2cd0",
+      "run_id": 35315070482,
+      "artifact_id": 10535360091,
+      "sha256": "1c6864ac74d55682f3ca374d53fd073a8c03c22cd970ccd705d0fd389a1dfac9",
+      "manifest_members_verified": 149
+    },
+    {
+      "phase": "stepped_red",
+      "commit": "3a8e72b8d1d316ba5bb817289ab9f05618e6c1ae",
+      "run_id": 35316894295,
+      "artifact_id": 10535466959,
+      "sha256": "11dfc261522a3daa63787bd0fd8b3d3a8a98cd75e8f0bca2f8fed0aa847c6eff",
+      "manifest_members_verified": 151
+    }
+  ],
+  "host": {
+    "artifact_id": 10541402192,
+    "build_exit": 0,
+    "errors": 0,
+    "file": "w63-host-847e9c3a.zip",
+    "game_attached": false,
+    "inner_manifest": null,
+    "run_id": 35332335473,
+    "sha256": "62e2176b79fabfc29b2729e00a5cad73156689cadb3a73f8cae09effb1c35bef",
+    "tests_run": false,
+    "warnings": 3304
+  },
+  "cases": {
+    "MerchantBulkRetryRegressionTests": 27,
+    "MerchantSaleRetryRegressionTests": 27,
+    "QuestActiveParentRegressionTests": 32,
+    "VendorBulkContinuationOwnershipRegressionTests": 16,
+    "VendorSaleContinuationOwnershipRegressionTests": 31,
+    "VendorSaleEntryOwnershipRegressionTests": 20,
+    "VendorSaleResultRegressionTests": 12
+  },
+  "scope": {
+    "runtime_changes_already_committed_before_recovery": true,
+    "new_runtime_change_in_recovery": false,
+    "new_windows_run_in_recovery": false,
+    "primary_red_group_original_and_normalized_tests_match_final": true,
+    "later_three_ownership_red_archives_recovered": false,
+    "13_retained_utility_tests_pass": true,
+    "pr_merged": false,
+    "deployed": false,
+    "independent_review": false,
+    "live_acceptance": false,
+    "exhaustive_complete": false
+  }
+}

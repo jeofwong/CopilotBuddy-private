@@ -1,0 +1,11 @@
+# CopilotBuddy audit — W61 actual uploaded addon review
+
+Continue draft PR51, branch `audit/next-55-equipment-observation-20260917`, repository `jeofwong/CopilotBuddy-private`. Re-read live refs. Read `docs/audit/2026-09-18/W61_ADDON_ARCHIVE_REVIEW.md` and `W61_VERIFICATION.json` first, then NEXT_CHAT_PROMPT, W60/W59 checkpoints, ADDON_EVIDENCE_335, QUEST_DATA_PROVENANCE_335 and both original-client/TrinityCore policies.
+
+The user supplied AddOns.zip; SHA25675055256969fd6d8baa218113fe49e08773965b09efd4bd35530c106c861eb3c. The exact snapshot was inspected without Lua execution or D-drive access. Carbonite3.34 and Nodes/Items/Transfer, PallyPowerv3.2.21, Pawn1.3.8, CLCRet and TurnIn2.1 are present. 376 TOCs include111 normal root entrypoints and265 nested entries; these are not enabled-addon counts. No WTF/SavedVariables directory was provided. W60's missing-source statement is superseded for this snapshot; active state and realm provenance remain unknown.
+
+Prioritize Carbonite geographic hints only after permission/format/map review, optional read-only PallyPower assignments with explicit Wrath flavor, Pawn/AutoEquip scale reconciliation and TurnIn interaction-conflict avoidance. Assignment4 means different blessings in PallyPower's Wrath/TBC branches. Pawn's bundled Ret coefficients share the current AutoEquip lineage, not independent DPS validation. Nested old versions must not be selected as active. Exact source paths/hashes and limitations are in W61; no proprietary addon payload was copied to this public repo.
+
+W61 is documentation/source analysis only: no raw database importer, runtime bridge, gameplay repair, fresh C# execution, merge or deployment. Latest previously verified code remains6cd4f9f9a14fe03c1921f1e56824e6532d63318d; retain W60's actual evidence without claiming a new run. W60 root pointers are archived by exact blob under pre-w61.
+
+Original3.3.5a/build12340 and TrinityCore3.3.5 primary, AzerothCore secondary. Preserve W59 merchant20/combat26 and all earlier safety tests and unfinished special-quest/buff/equipment/water/native acceptance work. Masterf462a9bb includes approved PR47/README; preserve backupsc43c50d8/8382a7ec/518baec5; exclude25/43/45. No PR51 merge, force push, installed-addon/binary/mesh changes or blanket compatibility/completion claim.

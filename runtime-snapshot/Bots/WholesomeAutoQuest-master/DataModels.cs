@@ -21,6 +21,86 @@ namespace WholesomeAQ
         public int Map { get; set; }
     }
 
+    public enum QuestDatasetSourceStatus
+    {
+        Unknown,
+        DeclaredAndBound
+    }
+
+    public sealed class QuestDatasetSourceIdentity
+    {
+        public QuestDatasetSourceStatus Status { get; init; } = QuestDatasetSourceStatus.Unknown;
+        public int ClientBuild { get; init; }
+        public string SourceCore { get; init; } = "unknown";
+        public string SourceBranch { get; init; } = "";
+        public string CoreRevision { get; init; } = "";
+        public string DatabaseRevision { get; init; } = "";
+        public string Exporter { get; init; } = "";
+        public string ExporterVersion { get; init; } = "";
+        public string QuestDataSha256 { get; init; } = "";
+        public bool RealmOverridesDeclared { get; init; }
+    }
+
+    public enum QuestStrategyPackStatus
+    {
+        Missing,
+        DeclaredAndBound
+    }
+
+    public enum QuestStrategyKind
+    {
+        UseItemOn,
+        GossipEvent,
+        Escort
+    }
+
+    public enum QuestStrategyTargetType
+    {
+        Creature,
+        GameObject
+    }
+
+    public enum QuestStrategyTargetState
+    {
+        Alive,
+        Dead,
+        BelowHp,
+        DontCare
+    }
+
+    public enum QuestStrategySuccessEvidence
+    {
+        ObjectiveProgress,
+        QuestComplete
+    }
+
+    public sealed class QuestStrategyRecipe
+    {
+        public int QuestId { get; init; }
+        public int ObjectiveIndex { get; init; }
+        public QuestStrategyKind Kind { get; init; }
+        public string SourceRef { get; init; } = "";
+        public int ItemId { get; init; }
+        public QuestStrategyTargetType TargetType { get; init; }
+        public int TargetId { get; init; }
+        public QuestStrategyTargetState TargetState { get; init; } = QuestStrategyTargetState.DontCare;
+        public double Range { get; init; }
+        public bool RequireLos { get; init; }
+        public int MaxAttempts { get; init; }
+        public int GossipOptionIndex { get; init; } = -1;
+        public QuestStrategySuccessEvidence SuccessEvidence { get; init; }
+    }
+
+    public sealed class QuestStrategyPack
+    {
+        public QuestStrategyPackStatus Status { get; init; } = QuestStrategyPackStatus.Missing;
+        public int ClientBuild { get; init; }
+        public string QuestDataSha256 { get; init; } = "";
+        public string SourceKind { get; init; } = "";
+        public string SourceRevision { get; init; } = "";
+        public List<QuestStrategyRecipe> Recipes { get; init; } = new List<QuestStrategyRecipe>();
+    }
+
     public class QuestDatabase
     {
         public List<QuestEntry> Quests { get; set; } = new List<QuestEntry>();

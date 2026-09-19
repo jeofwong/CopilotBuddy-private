@@ -25,7 +25,17 @@ namespace WholesomeAQ
             string zoneName,
             string playerName,
             int playerLevel,
-            List<VendorEntry> vendors = null)
+            List<VendorEntry> vendors = null) =>
+            BuildProfileXml(plan, db, zoneName, playerName, playerLevel, vendors, null);
+
+        public string BuildProfileXml(
+            IReadOnlyList<QuestPlanEntry> plan,
+            QuestDatabase db,
+            string zoneName,
+            string playerName,
+            int playerLevel,
+            List<VendorEntry> vendors,
+            QuestStrategyPack strategyPack)
         {
             if (plan == null)
                 throw new ArgumentNullException(nameof(plan));
@@ -94,6 +104,30 @@ namespace WholesomeAQ
                     if (entry.Hotspots == null || entry.Hotspots.Count == 0)
                         continue;
 
+                    QuestStrategyRecipe strategy = FindUseItemOnStrategy(
+                        strategyPack, entry.Quest.Id, entry.ObjectiveIndex);
+                    if (strategy != null)
+                    {
+                        XElement strategyGuard = BuildUseItemOnStrategyGuard(entry, strategy);
+                        if (strategyGuard == null)
+                            throw new InvalidDataException(
+                                $"Quest strategy {entry.Quest.Id}/{entry.ObjectiveIndex} could not be materialized.");
+                        questOrder.Add(strategyGuard);
+                        continue;
+                    }
+
+                    QuestStrategyRecipe gossip = FindGossipEventStrategy(
+                        strategyPack, entry.Quest.Id, entry.ObjectiveIndex);
+                    if (gossip != null)
+                    {
+                        XElement gossipGuard = BuildGossipEventStrategyGuard(entry, gossip);
+                        if (gossipGuard == null)
+                            throw new InvalidDataException(
+                                $"Gossip strategy {entry.Quest.Id}/{entry.ObjectiveIndex} could not be materialized.");
+                        questOrder.Add(gossipGuard);
+                        continue;
+                    }
+
                     XElement definition = BuildObjectiveDefinition(objective, entry.Hotspots);
                     XElement guard = BuildObjectiveGuard(entry);
                     if (definition == null || guard == null)
@@ -132,6 +166,150 @@ namespace WholesomeAQ
                         new XAttribute("GiverType", ProfileRelationType(entry.Giver.GiverType)),
                         LocationAttributes(point))));
 
+        private static QuestStrategyRecipe FindUseItemOnStrategy(
+            QuestStrategyPack strategyPack,
+            int questId,
+            int objectiveIndex)
+        {
+            if (strategyPack == null ||
+                strategyPack.Status != QuestStrategyPackStatus.DeclaredAndBound ||
+                strategyPack.Recipes == null)
+                return null;
+
+            QuestStrategyRecipe[] matches = strategyPack.Recipes
+                .Where(recipe => recipe != null
+                    && recipe.Kind == QuestStrategyKind.UseItemOn
+                    && recipe.QuestId == questId
+                    && recipe.ObjectiveIndex == objectiveIndex)
+                .ToArray();
+            if (matches.Length > 1)
+                throw new InvalidDataException(
+                    $"Multiple UseItemOn strategies own quest {questId} objective {objectiveIndex}.");
+            return matches.SingleOrDefault();
+        }
+
+        private static QuestStrategyRecipe FindGossipEventStrategy(
+            QuestStrategyPack strategyPack,
+            int questId,
+            int objectiveIndex)
+        {
+            if (strategyPack == null ||
+                strategyPack.Status != QuestStrategyPackStatus.DeclaredAndBound ||
+                strategyPack.Recipes == null)
+                return null;
+
+            QuestStrategyRecipe[] matches = strategyPack.Recipes
+                .Where(recipe => recipe != null
+                    && recipe.Kind == QuestStrategyKind.GossipEvent
+                    && recipe.QuestId == questId
+                    && recipe.ObjectiveIndex == objectiveIndex)
+                .ToArray();
+            if (matches.Length > 1)
+                throw new InvalidDataException(
+                    $"Multiple GossipEvent strategies own quest {questId} objective {objectiveIndex}.");
+            return matches.SingleOrDefault();
+        }
+
+        private static XElement BuildUseItemOnStrategyGuard(
+            QuestPlanEntry entry,
+            QuestStrategyRecipe strategy)
+        {
+            if (entry?.Quest == null || entry.Hotspots == null || entry.Hotspots.Count == 0 ||
+                strategy == null || strategy.ItemId <= 0 || strategy.TargetId <= 0 ||
+                strategy.Range <= 0 || strategy.MaxAttempts <= 0)
+                return null;
+
+            // The v1 pack records the BelowHp state but not the required percentage.
+            // Do not invent a threshold or silently fall back to generic objective work.
+            if (strategy.TargetState == QuestStrategyTargetState.BelowHp)
+                throw new InvalidDataException(
+                    $"UseItemOn strategy {strategy.QuestId}/{strategy.ObjectiveIndex} requires an explicit BelowHp threshold before runtime execution.");
+
+            SpawnPoint anchor = entry.Hotspots[0];
+            string mobType = strategy.TargetType == QuestStrategyTargetType.Creature
+                ? "Npc"
+                : "GameObject";
+            XElement behavior = new XElement("CustomBehavior",
+                new XAttribute("File", "UseItemOn"),
+                new XAttribute("QuestId", strategy.QuestId),
+                new XAttribute("ObjectiveIndex", strategy.ObjectiveIndex),
+                new XAttribute("ItemId", strategy.ItemId),
+                new XAttribute("MobId", strategy.TargetId),
+                new XAttribute("MobType", mobType),
+                new XAttribute("MobState", strategy.TargetState.ToString()),
+                new XAttribute("Range", strategy.Range),
+                new XAttribute("RequireLos", strategy.RequireLos),
+                new XAttribute("MaxAttempts", strategy.MaxAttempts),
+                new XAttribute("SuccessEvidence", strategy.SuccessEvidence.ToString()),
+                new XAttribute("WaitForNpcs", true),
+                new XAttribute("AcknowledgementTimeout", 5000),
+                LocationAttributes(anchor));
+
+            return new XElement("If",
+                new XAttribute("Condition", BuildObjectiveAdmissionCondition(entry)),
+                BuildFreewindDescentGuard(entry.Hotspots),
+                BuildGreatLiftAscentGuard(entry.Hotspots),
+                behavior);
+        }
+
+        private static XElement BuildGossipEventStrategyGuard(
+            QuestPlanEntry entry,
+            QuestStrategyRecipe strategy)
+        {
+            if (entry?.Quest == null || entry.Hotspots == null || entry.Hotspots.Count == 0 ||
+                strategy == null || strategy.Kind != QuestStrategyKind.GossipEvent ||
+                strategy.TargetType != QuestStrategyTargetType.Creature ||
+                strategy.TargetId <= 0 || strategy.GossipOptionIndex < 0 ||
+                strategy.Range <= 0 || strategy.MaxAttempts <= 0)
+                return null;
+
+            QuestObjective sourceObjective = entry.Quest.Objectives
+                .FirstOrDefault(value => value.Index == entry.ObjectiveIndex);
+            if (sourceObjective == null || sourceObjective.MobId != strategy.TargetId)
+                throw new InvalidDataException(
+                    $"GossipEvent strategy {strategy.QuestId}/{strategy.ObjectiveIndex} cannot borrow hotspots from objective target {sourceObjective?.MobId ?? 0}; target {strategy.TargetId} requires matching source location authority.");
+
+            SpawnPoint anchor = entry.Hotspots[0];
+            XElement behavior = new XElement("CustomBehavior",
+                new XAttribute("File", "GossipEvent"),
+                new XAttribute("QuestId", strategy.QuestId),
+                new XAttribute("ObjectiveIndex", strategy.ObjectiveIndex),
+                new XAttribute("MobId", strategy.TargetId),
+                // Strategy-pack indices are zero-based. GossipFrame owns the
+                // conversion to WoW Lua's one-based SelectGossipOption argument.
+                new XAttribute("GossipOptionIndex", strategy.GossipOptionIndex),
+                new XAttribute("Range", strategy.Range),
+                new XAttribute("RequireLos", strategy.RequireLos),
+                new XAttribute("MaxAttempts", strategy.MaxAttempts),
+                new XAttribute("SuccessEvidence", strategy.SuccessEvidence.ToString()),
+                new XAttribute("WaitForNpcs", true),
+                new XAttribute("AcknowledgementTimeout", 5000),
+                new XAttribute("GossipOpenTimeout", 3000),
+                new XAttribute("TargetWaitTimeout", 30000),
+                new XAttribute("NavigationTimeout", 120000),
+                LocationAttributes(anchor));
+
+            return new XElement("If",
+                new XAttribute("Condition", BuildObjectiveAdmissionCondition(entry)),
+                BuildFreewindDescentGuard(entry.Hotspots),
+                BuildGreatLiftAscentGuard(entry.Hotspots),
+                behavior);
+        }
+
+        private static string BuildObjectiveAdmissionCondition(QuestPlanEntry entry)
+        {
+            string condition = $"HasQuest({entry.Quest.Id})";
+            QuestObjective objective = entry.Quest.Objectives
+                .FirstOrDefault(value => value.Index == entry.ObjectiveIndex);
+            // Re-read collected items before transport or custom behavior on every
+            // entry/restart. The action's tool item is not the collection objective.
+            if (objective != null && objective.ItemId > 0 && objective.CollectCount > 0 &&
+                (objective.Type == ObjectiveType.CollectItem ||
+                 objective.Type == ObjectiveType.CollectFromGameObject))
+                condition += $" && GetItemCount({objective.ItemId}) < {objective.CollectCount}";
+            return condition;
+        }
+
         private static XElement BuildObjectiveGuard(QuestPlanEntry entry)
         {
             QuestObjective objective = entry.Quest.Objectives
@@ -142,7 +320,7 @@ namespace WholesomeAQ
             return node == null
                 ? null
                 : new XElement("If",
-                    new XAttribute("Condition", $"HasQuest({entry.Quest.Id})"),
+                    new XAttribute("Condition", BuildObjectiveAdmissionCondition(entry)),
                     BuildFreewindDescentGuard(entry.Hotspots),
                     BuildGreatLiftAscentGuard(entry.Hotspots),
                     node);

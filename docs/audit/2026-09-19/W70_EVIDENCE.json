@@ -1,0 +1,62 @@
+{
+  "schema": "copilotbuddy-audit-evidence-v1",
+  "checkpoint": "W70",
+  "date": "2026-09-19",
+  "repo": "jeofwong/CopilotBuddy-private",
+  "pr": 51,
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "verified": {
+    "sha": "2456369563478b1f0c11c902649d7b308169ddfc",
+    "tree": "90501a9a3233d9bd043621abf2ae5671c658cf05",
+    "integrated": {
+      "run_id": 35425658391,
+      "artifact_id": 10578078516,
+      "conclusion": "success"
+    },
+    "host": {
+      "run_id": 35425658309,
+      "artifact_id": 10578774562,
+      "conclusion": "success"
+    },
+    "quest_log": {
+      "run_id": 35425658361,
+      "artifact_id": 10578159821,
+      "conclusion": "success"
+    }
+  },
+  "retained_groups": {
+    "pull_isolation": "12/12",
+    "aura_count_safety": "8/8",
+    "collectthings_breath": "7/7",
+    "quest_strategy_execution": "9/9",
+    "plugin_refresh_reuse": "9/9",
+    "gossip_event_strategy": "14/14",
+    "equipment_observation": "65/65",
+    "equipment_hand": "38/38"
+  },
+  "implemented": [
+    "unchanged-source PluginManager compilation reuse with fresh plugin instances",
+    "authoritative source-bound single-option GossipEvent",
+    "exact gossip NPC-frame identity",
+    "bounded GossipEvent navigation/menu/target/acknowledgement lifetimes"
+  ],
+  "deliberately_unwired": [
+    "Escort"
+  ],
+  "next_source_risk": {
+    "owner": "Styx/WoWInternals/WoWObjects/WoWItem.cs",
+    "issue": "UseContainerItem derives BagIndex and BagSlot independently; unresolved BagIndex -1 aliases backpack",
+    "next_test_blob": "0970290ab69cc54bc8a39f98e8814f7f6c081420",
+    "prepared_production_blob": "ffc12d34d2971c944ff32196f3fd1ede83361f5e"
+  },
+  "claims_not_made": [
+    "live plugin memory acceptance",
+    "multi-step gossip chains",
+    "automatic Escort support",
+    "native container/cursor acceptance",
+    "full all-class buff strength policy",
+    "optimal gear/loadout/cap valuation",
+    "runtime Carbonite terrain authority",
+    "master merge or deployment"
+  ]
+}

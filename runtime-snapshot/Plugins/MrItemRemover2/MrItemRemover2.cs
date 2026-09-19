@@ -149,6 +149,7 @@ namespace MrItemRemover2
 
         public override void OnEnable()
         {
+            ResetPendingDelete();
             Lua.Events.AttachEvent("DELETE_ITEM_CONFIRM", DeleteItemConfirmPopup);
             Lua.Events.AttachEvent("MERCHANT_SHOW", SellVenderItems);
             Lua.Events.AttachEvent("LOOT_CLOSED", LootEnded);
@@ -169,6 +170,9 @@ namespace MrItemRemover2
             Lua.Events.DetachEvent("MERCHANT_SHOW", SellVenderItems);
             Lua.Events.DetachEvent("LOOT_CLOSED", LootEnded);
 
+            if (HasPendingDelete)
+                Dlog("Disabling with a pending delete transaction; cursor ownership is left untouched.");
+            ResetPendingDelete();
             IsInitialized = false;
             MirSave();
 
@@ -177,6 +181,12 @@ namespace MrItemRemover2
 
         public override void Pulse()
         {
+            if (HasPendingDelete)
+            {
+                TickPendingDelete();
+                return;
+            }
+
             if (ManualCheckRequested)
             {
                 EnableCheck = true;

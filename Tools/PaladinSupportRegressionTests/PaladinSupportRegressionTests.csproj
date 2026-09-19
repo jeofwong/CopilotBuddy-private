@@ -7,6 +7,8 @@
     <Compile Include="../../TreeSharp/*.cs" Link="Production/TreeSharp/%(Filename)%(Extension)" />
     <Compile Include="../../runtime-snapshot/Routines/Singular wotlk/ClassSpecific/Paladin/Common.cs" Link="Production/Common.cs" />
     <Compile Include="../../runtime-snapshot/Routines/Singular wotlk/ClassSpecific/Paladin/Retribution.cs" Link="Production/Retribution.cs" />
+    <Compile Include="../../runtime-snapshot/Routines/Singular wotlk/ClassSpecific/Paladin/Lowbie.cs" Link="Production/Lowbie.cs" />
+    <Compile Include="../../runtime-snapshot/Routines/Singular wotlk/ClassSpecific/Paladin/Protection.cs" Link="Production/Protection.cs" />
     <Compile Include="../../runtime-snapshot/Routines/Singular wotlk/ClassSpecific/Paladin/PaladinSupport.cs" Link="Production/PaladinSupport.cs" Condition="Exists('../../runtime-snapshot/Routines/Singular wotlk/ClassSpecific/Paladin/PaladinSupport.cs')" />
     <Compile Include="../../runtime-snapshot/Routines/Singular wotlk/Dynamics/Attributes.cs" Link="Production/Attributes.cs" />
     <Compile Include="../../runtime-snapshot/Routines/Singular wotlk/Helpers/Throttle.cs" Link="Production/Throttle.cs" />

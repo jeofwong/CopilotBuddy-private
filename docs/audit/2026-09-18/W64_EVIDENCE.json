@@ -1,0 +1,155 @@
+{
+  "schema": 1,
+  "repository": "jeofwong/CopilotBuddy-private",
+  "pr": 51,
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "reconciled_start": "518d1fcdb3bce7248094544b7ffd20ead9c5b3c6",
+  "test_only_commit": "e274b7a9c9270f37e593e0d576bf24adc5fca12b",
+  "verified_code": "4320f619e0ee6a58dd848ce9d993dcc93489c9cf",
+  "verified_tree": "4f677d888a737f14d5b5bfb202417786efe1accb",
+  "merchant_blob_before": "cf9b57ddb793f817cb7f14c1247007e3e91539f4",
+  "merchant_blob_after": "0276a8825e2d8ac8da00f53492b523b3f9480f37",
+  "changes": {
+    "production_paths": 1,
+    "production_lines_added": 2,
+    "production_lines_deleted": 0,
+    "added_regression_files": 1,
+    "existing_tests_changed": false,
+    "workflows_changed": false
+  },
+  "artifacts": [
+    {
+      "phase": "baseline",
+      "file": "w63-recovered-integrated-847e9c3a.zip",
+      "commit": "847e9c3aba9c44a1f92d5c810afccdf372465fee",
+      "run_id": 35332335480,
+      "artifact_id": 10541791831,
+      "sha256": "1f8f7b1b0cccdbf7ec7a41f90eb7242542d94e5b323aa27e4e0dd5f1443e6515",
+      "expected_failure": null,
+      "groups": 99,
+      "step_cases": null
+    },
+    {
+      "phase": "step-red",
+      "file": "w64-step-context-red-e274b7a9.zip",
+      "commit": "e274b7a9c9270f37e593e0d576bf24adc5fca12b",
+      "run_id": 35337737185,
+      "artifact_id": 10543786713,
+      "sha256": "de44f4f09992fbfc9cce41fab18d52cf9e42df2ab0e466eaecf8231a008655b7",
+      "expected_failure": "WholesomeQuestRecoveryRegressionTests",
+      "groups": 100,
+      "step_cases": 3
+    },
+    {
+      "phase": "merchant-green-analyzer-red",
+      "file": "w64-merchant-green-analyzer-red-4320f619.zip",
+      "commit": "4320f619e0ee6a58dd848ce9d993dcc93489c9cf",
+      "run_id": 35338415023,
+      "run_attempt": 1,
+      "artifact_id": 10543912635,
+      "sha256": "58e515208d9f089e5ab3d43dfdb325082b30a94b204a2ac87456f79a4ac0536b",
+      "expected_failure": "Analyzers",
+      "groups": 100,
+      "step_cases": 6
+    },
+    {
+      "phase": "green",
+      "file": "w64-integrated-rerun-4320f619.zip",
+      "commit": "4320f619e0ee6a58dd848ce9d993dcc93489c9cf",
+      "run_id": 35338415023,
+      "run_attempt": 2,
+      "artifact_id": 10544426266,
+      "sha256": "3d70a4b0f1ead2ee71145012bf66128f90df521d2d41450514488d510cb8f77f",
+      "expected_failure": null,
+      "groups": 100,
+      "step_cases": 6
+    },
+    {
+      "phase": "host",
+      "file": "w64-host-4320f619.zip",
+      "commit": "4320f619e0ee6a58dd848ce9d993dcc93489c9cf",
+      "run_id": 35338415009,
+      "artifact_id": 10543603614,
+      "sha256": "dc96bb0b5f20074b01151fada8ac03a3d76182e0ae7582b9ef090eb31064b74f"
+    }
+  ],
+  "current": {
+    "integrated_entries_pass": 17,
+    "aggregate_groups_pass": 100,
+    "analyzer_tests_pass": 74,
+    "step_structural_cases_pass": 6,
+    "source_hash_index_entries": 1789,
+    "normalized_members": 112,
+    "inner_manifest_entries": 156,
+    "host_errors": 0,
+    "host_warnings": 3304
+  },
+  "red_green": {
+    "structural_red_pass": 3,
+    "structural_total": 6,
+    "intended_assertions": 3,
+    "unexpected_errors": 0,
+    "normalized_byte_identical": 112,
+    "unchanged_input_hashes": 1788,
+    "changed_input_paths": [
+      "Styx/Logic/Inventory/Frames/Merchant/MerchantFrame.cs"
+    ]
+  },
+  "rerun": {
+    "same_commit": true,
+    "all_1789_input_hashes_identical": true,
+    "all_112_normalized_files_identical": true,
+    "attempt1_analyzer": "test_addon_evidence.InventoryTests.test_excludes_binary_assets: 0 != 1",
+    "attempt1_count": 74,
+    "attempt1_failures": 1,
+    "attempt2_count": 74,
+    "attempt2_failures": 0,
+    "root_cause": "unproven; no file identity/OS cause inferred; original failed archive retained",
+    "test_or_production_workaround_added": false
+  },
+  "supplemental_lua": {
+    "runtime": "system Lua5.4 via ctypes, not originalLua5.1/WoW",
+    "red_pass": 18,
+    "total": 30,
+    "green_pass": 30,
+    "unexpected": 0,
+    "actual_current_ci_export": true,
+    "baseline_sha256": "6f015ea9dff16cb8c9c5c465019b047c44e2e8d62bf783c5e8626ebfb2cdf148",
+    "green_sha256": "4e7998ac80eb33c3dffbe7faa86258d5b6f9cd1705846532cf44a38aea8d4dcb"
+  },
+  "source_recovery": {
+    "historical_archive_sha256": "1de3cb1edfa2f0fa876187f6594d846fc1cc8661e8c4463e833e67e94dc656ea",
+    "original_artifact_id": 10356108635,
+    "canonical_members_verified": 4026,
+    "current_index_matching_downloaded_files": 1539,
+    "missing_or_different_current_inputs": 249,
+    "full_current_checkout": false,
+    "all_matched_files_reviewed": false
+  },
+  "next_candidate": {
+    "file": "Bots/Gatherbuddy/GatherbuddyBot.cs",
+    "blob": "c7ee45154129563a09072db9c62298a88d61fd85",
+    "proposed_blob": "791e8511312a215854574cbc9a46c04832c8df83",
+    "change": "CreateSellBehavior root PrioritySelector to Sequence",
+    "proposed_cases": 14,
+    "csharp_compiled": false,
+    "windows_executed": false,
+    "production_published": false,
+    "scope": "actual builder/TreeSharp composition with substituted external phases; not native NPC visit"
+  },
+  "previous_package": {
+    "file": "previous-w63.zip",
+    "sha256": "894441da8be44187f23bfc379f52f31784b534e0fda204431b222a00536b83da",
+    "purpose": "retain original W63 recovery and five original evidence archives unchanged"
+  },
+  "scope": {
+    "native_publishing_succeeded": true,
+    "new_windows_runs_in_this_continuation": true,
+    "new_lua_probe_executed": true,
+    "game_attached": false,
+    "independent_review": false,
+    "merged": false,
+    "deployed": false,
+    "exhaustive_complete": false
+  }
+}

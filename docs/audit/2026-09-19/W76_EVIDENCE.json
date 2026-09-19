@@ -1,0 +1,109 @@
+{
+  "schema": "copilotbuddy-audit-evidence-v1",
+  "checkpoint": "W76",
+  "date": "2026-09-19",
+  "repo": "jeofwong/CopilotBuddy-private",
+  "pr": 51,
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "verified": {
+    "sha": "698068344bbc51f79d81f76e7d3b91453f29de0c",
+    "tree": "77dd5c926b45a82f2961f89f95e058111d7cc0d1",
+    "integrated": {
+      "run_id": 35441935790,
+      "artifact_id": 10583728386,
+      "digest": "sha256:364bac78c8b67097056056bd6db4d8bd78eb4a4046821b013cfe51456822fe6e",
+      "conclusion": "success",
+      "entries": "17/17"
+    },
+    "host": {
+      "run_id": 35441935725,
+      "artifact_id": 10583953031,
+      "digest": "sha256:e73bb3821ea5d3a3630fdde16d705da7d443e954b8bfebef34044e65b162a4a6",
+      "conclusion": "success"
+    },
+    "equip_cursor_ownership": "19/19; assertions=0; unexpected=0",
+    "retained_container_slot_identity": "20/20",
+    "retained_mr_item_remover_delete": "14/14"
+  },
+  "primary_clean_red": {
+    "sha": "6622f7828b5460730752b5be8731603e0487ca58",
+    "integrated": {
+      "run_id": 35437261168,
+      "artifact_id": 10583270460,
+      "digest": "sha256:91bf3dc1fdf621ed87b8ec4d14aee8b204abc41e6d5191b4474eafbf8e36d175",
+      "result": "4/17; 13 intended assertions; 0 unexpected; both owners compiled"
+    },
+    "host_run_id": 35437261170
+  },
+  "residual_popup_red": {
+    "sha": "86333b357df0bab88925075a4e592c96adc2d541",
+    "integrated": {
+      "run_id": 35441689706,
+      "artifact_id": 10583628215,
+      "digest": "sha256:3f194756ab6a44ed250d2cd9d54232f1d2d2b7904fd2778a2e261ce72119684d",
+      "result": "17/19; 2 intended assertions; 0 unexpected"
+    },
+    "host": {
+      "run_id": 35441689712,
+      "artifact_id": 10583752980,
+      "digest": "sha256:da7cbf275db4c404a107ca95ae3bbff2f1a6581848ee8169bcf05c8e0c43d884",
+      "conclusion": "success"
+    }
+  },
+  "production_commits": {
+    "pickup_source_boundary": "1315fecf087395207a57f0d7a2560218890ba0ee",
+    "equip_item_owner": "fb11f02d4cf8b37a05f10a238e2e4f8fe336f6bd",
+    "auto_equip_owner": "6bf484f20f48c44603f3ae5f966da93770ea4e86",
+    "slot_owned_popup_confirmation": "698068344bbc51f79d81f76e7d3b91453f29de0c"
+  },
+  "test_corrections": {
+    "initial_owner_tests": "6622f7828b5460730752b5be8731603e0487ca58",
+    "locator_alignment": "ba08602ae3f5ccb54eba08f8dfceff5418826ebf",
+    "pickup_assertion_scope": "2e8691d9d421085e0a8b937fb23f632093e430f2",
+    "slot_popup_requirement": "86333b357df0bab88925075a4e592c96adc2d541"
+  },
+  "original_client_ui": {
+    "repo": "wowgaming/3.3.5-interface-files",
+    "commit": "d0339b17b0221db76e6acd2dc2915d224a5b62ca",
+    "contract": [
+      "EQUIP_BIND and AUTOEQUIP_BIND call EquipPendingItem(slot)",
+      "StaticPopup_Show stores data on dialog.data",
+      "non-multiple StaticPopup_FindVisible does not filter data"
+    ]
+  },
+  "implemented": [
+    "single pending EquipItem/AutoEquip GUID+entry+slot owner",
+    "validated TryPickUp source bag/slot instead of independent BagIndex/BagSlot mutation",
+    "no ClearCursor in repaired equip owners",
+    "exact cursor item entry before EquipCursorItem",
+    "equipment-slot GUID acknowledgement before completion",
+    "bounded pending lifetime and owned-source restoration",
+    "exact bind popup type plus dialog.data equipment-slot match",
+    "unknown-slot bind confirmation fails closed",
+    "AutoEquip gates overlapping managed equip transactions"
+  ],
+  "next": {
+    "owner_domain": "AuctionHouse core",
+    "paths": [
+      "Styx/WoWInternals/Misc/AuctionHouse.cs",
+      "Styx/Logic/Inventory/Frames/AuctionHouse/AuctionHouse.cs"
+    ],
+    "issues": [
+      "raw ClearCursor after auction sell transfer",
+      "caller/raw bag-slot pickup without stable physical-item identity",
+      "no sell-slot acknowledgement before StartAuction",
+      "no late AuctionFrame/context revalidation"
+    ],
+    "defer": "ProfessionBuddy cursor/post transactions are the following separate slice"
+  },
+  "claims_not_made": [
+    "live original-client equip acceptance",
+    "same-entry ABA immunity",
+    "global cross-plugin cursor arbitration",
+    "same-slot foreign popup immunity",
+    "gear valuation correctness",
+    "auction transaction safety",
+    "ProfessionBuddy transaction safety",
+    "master merge or deployment"
+  ]
+}

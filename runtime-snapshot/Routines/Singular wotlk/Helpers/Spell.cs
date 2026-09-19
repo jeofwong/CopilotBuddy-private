@@ -182,6 +182,62 @@ namespace Singular.Helpers
 
         #region Cast - by name
 
+        // Use the same admission before setup and immediately before dispatch.
+        // Preserve the existing self/melee/ranged policy instead of introducing
+        // a second, subtly different LOS or range calculation at the boundary.
+        private static bool CanCastNamedSpell(string name, WoWUnit target,
+            SimpleBooleanDelegate checkMovement, SimpleBooleanDelegate requirements, object ret)
+        {
+            if (string.IsNullOrWhiteSpace(name) || requirements == null || checkMovement == null)
+                return false;
+            if (target == null)
+                return false;
+            var minReqs = requirements(ret) && Unit.IsCombatActionSafe(name, target);
+            var canCast = false;
+            var inRange = false;
+            if (minReqs)
+            {
+                canCast = SpellManager.CanCast(name, target, false, checkMovement(ret));
+
+                if (canCast)
+                {
+                    // We're always in range of ourselves. So just ignore this bit if we're casting it on us
+                    if (target.IsMe)
+                    {
+                        inRange = true;
+                    }
+                    else
+                    {
+                        WoWSpell spell;
+                        if (SpellManager.Spells.TryGetValue(name, out spell))
+                        {
+                            var rangeId = spell.SpellRangeId;
+                            var minRange = spell.MinRange;
+                            var maxRange = spell.MaxRange;
+                            var targetDistance = target.Distance;
+                            // RangeId 1 is "Self Only".
+                            if (rangeId == 1)
+                                inRange = true;
+                            // RangeId 2 is melee range — no LOS needed.
+                            else if (rangeId == 2)
+                                inRange = targetDistance < MeleeRange;
+                            else
+                            {
+                                // LOS check only for true ranged spells.
+                                if (!target.InLineOfSpellSight)
+                                    inRange = false;
+                                else
+                                    inRange = targetDistance < maxRange &&
+                                              targetDistance > (minRange == 0 ? minRange : minRange + 3);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return minReqs && canCast && inRange;
+        }
+
         /// <summary>
         ///   Creates a behavior to cast a spell by name. Returns RunStatus.Success if successful, RunStatus.Failure otherwise.
         /// </summary>
@@ -257,60 +313,10 @@ namespace Singular.Helpers
             return new Decorator(
                 ret =>
                 {
-                    //Logger.WriteDebug("Casting spell: " + name);
-                    //Logger.WriteDebug("Requirements: " + requirements(ret));
-                    //Logger.WriteDebug("OnUnit: " + onUnit(ret));
-                    //Logger.WriteDebug("CanCast: " + SpellManager.CanCast(name, onUnit(ret), false));
-
                     if (string.IsNullOrWhiteSpace(name) || onUnit == null || requirements == null || checkMovement == null)
                         return false;
                     var target = onUnit(ret);
-                    if (target == null)
-                        return false;
-                    var minReqs = requirements(ret) && Unit.IsCombatActionSafe(name, target);
-                    var canCast = false;
-                    var inRange = false;
-                    if (minReqs)
-                    {
-                        canCast = SpellManager.CanCast(name, target, false, checkMovement(ret));
-
-                        if (canCast)
-                        {
-                            // We're always in range of ourselves. So just ignore this bit if we're casting it on us
-                            if (target.IsMe)
-                            {
-                                inRange = true;
-                            }
-                            else
-                            {
-                                WoWSpell spell;
-                                if (SpellManager.Spells.TryGetValue(name, out spell))
-                                {
-                                    var rangeId = spell.SpellRangeId;
-                                    var minRange = spell.MinRange;
-                                    var maxRange = spell.MaxRange;
-                                    var targetDistance = target.Distance;
-                                    // RangeId 1 is "Self Only".
-                                    if (rangeId == 1)
-                                        inRange = true;
-                                    // RangeId 2 is melee range — no LOS needed.
-                                    else if (rangeId == 2)
-                                        inRange = targetDistance < MeleeRange;
-                                    else
-                                    {
-                                        // LOS check only for true ranged spells.
-                                        if (!target.InLineOfSpellSight)
-                                            inRange = false;
-                                        else
-                                            inRange = targetDistance < maxRange &&
-                                                      targetDistance > (minRange == 0 ? minRange : minRange + 3);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    return minReqs && canCast && inRange;
+                    return CanCastNamedSpell(name, target, checkMovement, requirements, ret);
                 },
                 new Sequence( 
                     new DecoratorContinue(ret => StyxWoW.Me.Mounted && !name.Contains("Aura") && !name.Contains("Presence") && !name.Contains("Stance"),
@@ -330,6 +336,11 @@ namespace Singular.Helpers
                             if (target == null || !Unit.IsCombatActionSafe(name, target))
                                 return RunStatus.Failure;
                             Logger.Write("Casting " + name + " on " + target.SafeName());
+                            // Dismount/target setup and logging may have changed sight,
+                            // range, availability or caller requirements. Do not reselect
+                            // a different recipient between this check and submission.
+                            if (!CanCastNamedSpell(name, target, checkMovement, requirements, ret))
+                                return RunStatus.Failure;
                             return SpellManager.Cast(name, target)
                                 ? RunStatus.Success
                                 : RunStatus.Failure;
@@ -443,6 +454,11 @@ namespace Singular.Helpers
                             if (target == null || !Unit.IsCombatActionSafe(spellId, target))
                                 return RunStatus.Failure;
                             Logger.Write("Casting " + spellId + " on " + target.SafeName());
+                            // The ID overload retains the host's range/LOS policy.
+                            if (requirements == null || !requirements(ret) ||
+                                !Unit.IsCombatActionSafe(spellId, target) ||
+                                !SpellManager.CanCast(spellId, target, true))
+                                return RunStatus.Failure;
                             return SpellManager.Cast(spellId, target)
                                 ? RunStatus.Success
                                 : RunStatus.Failure;
@@ -693,7 +709,7 @@ namespace Singular.Helpers
         /// </remarks>
         /// <param name = "spellId">The ID of the buff</param>
         /// <param name = "requirements">The requirements.</param>
-        /// <returns></returns>
+        /// <returns>.</returns>
         public static Composite Buff(int spellId, SimpleBooleanDelegate requirements)
         {
             return Buff(spellId, ret => StyxWoW.Me.CurrentTarget, requirements);

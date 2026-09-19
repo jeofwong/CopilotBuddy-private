@@ -210,15 +210,57 @@ namespace SmartLootRoller
             return true; // Default to true for items we don't know how to filter (e.g. quest items)
         }
 
+        // Explicitly missing observations are not a zero-value loadout. Keep this
+        // decision local to the current call so hydrated items can be reconsidered.
+        // Null entries are legitimate empty slots in WoWBag.Items; a non-null
+        // item without metadata is different and cannot authorize replacement.
+        private static bool TryObserveEquipment(
+            out WoWItem[] items, out WoWItem mainHand, out WoWItem offHand)
+        {
+            items = null;
+            mainHand = null;
+            offHand = null;
+            var player = StyxWoW.Me;
+            var equipment = player?.Inventory?.Equipped;
+            if (equipment == null)
+                return false;
+
+            var observedItems = equipment.Items;
+            if (observedItems == null)
+                return false;
+            items = new List<WoWItem>(observedItems).ToArray();
+            mainHand = equipment.MainHand;
+            offHand = equipment.OffHand;
+            if ((mainHand != null && mainHand.ItemInfo == null) ||
+                (offHand != null && offHand.ItemInfo == null))
+                return false;
+            foreach (var item in items)
+                if (item != null && item.ItemInfo == null)
+                    return false;
+            return true;
+        }
+
+        // Match the host's physical slot aliases, not just the inventory-type
+        // spelling. This does not grant class eligibility or change hand loadouts.
+        private static InventoryType ComparableSlot(InventoryType type)
+        {
+            switch (type)
+            {
+                case InventoryType.Robe:
+                    return InventoryType.Chest;
+                case InventoryType.Thrown:
+                case InventoryType.RangedRight:
+                case InventoryType.Relic:
+                    return InventoryType.Ranged;
+                default:
+                    return type;
+            }
+        }
+
         public static float GetMinEquippedScore(InventoryType invType, Dictionary<string, float> weights)
         {
-            var me = StyxWoW.Me;
-            if (me == null || me.Inventory == null || me.Inventory.Equipped == null)
-                return 0f;
-
-            var equippedItems = me.Inventory.Equipped.Items;
-            if (equippedItems == null)
-                return 0f;
+            if (!TryObserveEquipment(out var equippedItems, out var mhItem, out var ohItem))
+                return float.NaN;
 
             // --- SPECIAL CASE: WEAPONS AND OFFHANDS ---
             bool isWeaponSlot = invType == InventoryType.Weapon || invType == InventoryType.WeaponMainHand || 
@@ -227,10 +269,6 @@ namespace SmartLootRoller
 
             if (isWeaponSlot)
             {
-                var paperDoll = me.Inventory.Equipped;
-                WoWItem mhItem = paperDoll.MainHand;
-                WoWItem ohItem = paperDoll.OffHand;
-
                 float mhScore = (mhItem != null && mhItem.ItemInfo != null) ? CalculateScore(mhItem, weights) : 0f;
                 float ohScore = (ohItem != null && ohItem.ItemInfo != null) ? CalculateScore(ohItem, weights) : 0f;
                 
@@ -276,25 +314,12 @@ namespace SmartLootRoller
 
             // --- DEFAULT CASE: ARMOR, RINGS, TRINKETS ---
             var scores = new List<float>();
+            var comparableSlot = ComparableSlot(invType);
             foreach (var item in equippedItems)
             {
                 if (item != null && item.ItemInfo != null)
                 {
-                    bool matchesSlot = false;
-                    
-                    if (item.ItemInfo.InventoryType == invType)
-                    {
-                        matchesSlot = true;
-                    }
-                    else if (invType == InventoryType.Ranged && 
-                            (item.ItemInfo.InventoryType == InventoryType.Ranged || 
-                             item.ItemInfo.InventoryType == InventoryType.Thrown ||
-                             item.ItemInfo.InventoryType == InventoryType.RangedRight))
-                    {
-                        matchesSlot = true;
-                    }
-
-                    if (matchesSlot)
+                    if (ComparableSlot(item.ItemInfo.InventoryType) == comparableSlot)
                     {
                         scores.Add(CalculateScore(item, weights));
                     }
@@ -324,34 +349,38 @@ namespace SmartLootRoller
 
         public static bool IsSlotEmpty(InventoryType invType)
         {
-            var me = StyxWoW.Me;
-            if (me == null || me.Inventory == null || me.Inventory.Equipped == null) return true;
-
-            var equippedItems = me.Inventory.Equipped.Items;
+            if (!TryObserveEquipment(out var equippedItems, out var mainHand, out var offHand))
+                return false;
             
-            if (invType == InventoryType.TwoHandWeapon || invType == InventoryType.WeaponMainHand || invType == InventoryType.Weapon)
+            // A two-hander displaces both hands. An empty main-hand alone
+            // cannot bypass comparison with a valuable off-hand.
+            if (invType == InventoryType.TwoHandWeapon)
+                return mainHand == null && offHand == null;
+
+            if (invType == InventoryType.WeaponMainHand || invType == InventoryType.Weapon)
             {
-                var mh = me.Inventory.Equipped.MainHand;
+                var mh = mainHand;
                 return mh == null || mh.ItemInfo == null;
             }
             if (invType == InventoryType.Shield || invType == InventoryType.WeaponOffHand || invType == InventoryType.Holdable)
             {
-                var mh = me.Inventory.Equipped.MainHand;
+                var mh = mainHand;
                 if (mh != null && mh.ItemInfo != null && mh.ItemInfo.InventoryType == InventoryType.TwoHandWeapon)
                 {
                     return false; // The offhand is effectively 'occupied' by the 2H weapon
                 }
 
-                var oh = me.Inventory.Equipped.OffHand;
+                var oh = offHand;
                 return oh == null || oh.ItemInfo == null;
             }
 
             int count = 0;
+            var comparableSlot = ComparableSlot(invType);
             int maxAllowed = (invType == InventoryType.Finger || invType == InventoryType.Trinket || invType == InventoryType.Weapon) ? 2 : 1;
 
             foreach (var item in equippedItems)
             {
-                if (item != null && item.ItemInfo != null && item.ItemInfo.InventoryType == invType)
+                if (item != null && item.ItemInfo != null && ComparableSlot(item.ItemInfo.InventoryType) == comparableSlot)
                     count++;
             }
 
@@ -360,27 +389,31 @@ namespace SmartLootRoller
 
         public static float GetMinEquippedItemLevel(InventoryType invType)
         {
-            var me = StyxWoW.Me;
-            if (me == null || me.Inventory == null || me.Inventory.Equipped == null) return 0f;
-
-            var equippedItems = me.Inventory.Equipped.Items;
+            if (!TryObserveEquipment(out var equippedItems, out var mainHand, out var offHand))
+                return float.NaN;
             List<float> ilvls = new List<float>();
+            var comparableSlot = ComparableSlot(invType);
 
             if (invType == InventoryType.TwoHandWeapon || invType == InventoryType.WeaponMainHand || invType == InventoryType.Weapon)
             {
-                var mh = me.Inventory.Equipped.MainHand;
+                // Retain the existing main-hand tie convention, but do not
+                // lose the only displaced item when the main-hand is empty.
+                var mh = invType == InventoryType.TwoHandWeapon ? mainHand ?? offHand : mainHand;
                 if (mh != null && mh.ItemInfo != null) ilvls.Add(mh.ItemInfo.Level);
             }
             else if (invType == InventoryType.Shield || invType == InventoryType.WeaponOffHand || invType == InventoryType.Holdable)
             {
-                var oh = me.Inventory.Equipped.OffHand;
+                // Off-hand replacement of a two-hander already uses the
+                // main-hand score; its level comparison must use that item too.
+                var oh = mainHand != null && mainHand.ItemInfo != null &&
+                    mainHand.ItemInfo.InventoryType == InventoryType.TwoHandWeapon ? mainHand : offHand;
                 if (oh != null && oh.ItemInfo != null) ilvls.Add(oh.ItemInfo.Level);
             }
             else
             {
                 foreach (var item in equippedItems)
                 {
-                    if (item != null && item.ItemInfo != null && item.ItemInfo.InventoryType == invType)
+                    if (item != null && item.ItemInfo != null && ComparableSlot(item.ItemInfo.InventoryType) == comparableSlot)
                     {
                         ilvls.Add(item.ItemInfo.Level);
                     }

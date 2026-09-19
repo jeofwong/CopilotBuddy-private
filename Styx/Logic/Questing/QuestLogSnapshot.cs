@@ -22,13 +22,14 @@ namespace Styx.Logic.Questing
         private readonly QuestLog.RawQuestObservation? _raw;
 
         internal QuestLogSnapshot(QuestLog log, QuestLog.RawQuestObservation? raw,
-            IEnumerable<uint> accepted, IEnumerable<uint> ready,
+            IEnumerable<uint> accepted, IEnumerable<uint> ready, IEnumerable<uint> failed,
             IEnumerable<PlayerQuest> quests, bool identityComplete, bool metadataComplete)
         {
             _log = log;
             _raw = raw;
             AcceptedQuestIds = Array.AsReadOnly(accepted.ToArray());
             ReadyQuestIds = Array.AsReadOnly(ready.ToArray());
+            FailedQuestIds = Array.AsReadOnly(failed.ToArray());
             Quests = Array.AsReadOnly(quests.ToArray());
             IsIdentityComplete = identityComplete;
             IsComplete = identityComplete && metadataComplete;
@@ -37,6 +38,8 @@ namespace Styx.Logic.Questing
         public ReadOnlyCollection<uint> AcceptedQuestIds { get; }
         /// <summary>Accepted IDs whose observed raw Completed flag was set.</summary>
         public ReadOnlyCollection<uint> ReadyQuestIds { get; }
+        /// <summary>Accepted IDs whose observed raw Failed flag was set.</summary>
+        public ReadOnlyCollection<uint> FailedQuestIds { get; }
         /// <summary>
         /// Successfully materialized metadata handles, not frozen live completion
         /// results. This collection alone never establishes log completeness.
@@ -74,6 +77,7 @@ namespace Styx.Logic.Questing
         {
             var accepted = new List<uint>();
             var ready = new List<uint>();
+            var failed = new List<uint>();
             var quests = new List<PlayerQuest>();
             RawQuestObservation? first = null;
             bool identityComplete = false;
@@ -82,7 +86,7 @@ namespace Styx.Logic.Questing
             {
                 bool firstRead = TryReadRawQuestObservation(out first);
                 if (first == null)
-                    return new QuestLogSnapshot(this, null, accepted, ready, quests, false, false);
+                    return new QuestLogSnapshot(this, null, accepted, ready, failed, quests, false, false);
 
                 var distinct = new HashSet<uint>();
                 bool validIds = true;
@@ -93,8 +97,11 @@ namespace Styx.Logic.Questing
                     if (id == 0)
                         continue;
                     accepted.Add(id);
-                    if ((first.UInt32At(offset + 4) & (uint)WoWDescriptorQuestFlags.Completed) != 0)
+                    uint flags = first.UInt32At(offset + 4);
+                    if ((flags & (uint)WoWDescriptorQuestFlags.Completed) != 0)
                         ready.Add(id);
+                    if ((flags & (uint)WoWDescriptorQuestFlags.Failed) != 0)
+                        failed.Add(id);
                     if (id > int.MaxValue || !distinct.Add(id))
                         validIds = false;
                 }
@@ -102,7 +109,7 @@ namespace Styx.Logic.Questing
                 // Preserve observed occupied IDs even when the owner changed or
                 // optional metadata is unavailable. Such an observation is not authority.
                 if (!firstRead || !validIds)
-                    return new QuestLogSnapshot(this, first, accepted, ready, quests, false, false);
+                    return new QuestLogSnapshot(this, first, accepted, ready, failed, quests, false, false);
 
                 foreach (uint id in accepted)
                 {
@@ -128,7 +135,7 @@ namespace Styx.Logic.Questing
                 identityComplete = false;
                 metadataComplete = false;
             }
-            return new QuestLogSnapshot(this, first, accepted, ready, quests,
+            return new QuestLogSnapshot(this, first, accepted, ready, failed, quests,
                 identityComplete, metadataComplete);
         }
 

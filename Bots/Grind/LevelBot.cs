@@ -144,6 +144,7 @@ namespace Bots.Grind
 
         public override void Start()
         {
+            PullIsolationCoordinator.Reset();
             if (ProfileManager.CurrentOuterProfile == null)
                 throw new HonorbuddyUnableToStartException("You haven't loaded a profile.");
 
@@ -161,6 +162,7 @@ namespace Bots.Grind
 
         public override void Stop()
         {
+            PullIsolationCoordinator.Reset();
             Targeting.Instance.IncludeTargetsFilter -= LevelBotIncludeTargetsFilter;
             LootTargeting.Instance.IncludeTargetsFilter -= LevelbotIncludeLootsFilter;
             Bots.DungeonBuddy.Avoidance.WorldObstacleManager.Shutdown();
@@ -213,7 +215,7 @@ namespace Bots.Grind
                     )),
                     // Not in combat: Rest, PreCombatBuff, Pull
                     new Decorator(
-                        ctx => !StyxWoW.Me.Combat,
+                        ctx => !IsPlayerOrPetInCombat(),
                         new PrioritySelector(
                             Routine.RestBehavior,
                             Routine.PreCombatBuffBehavior,
@@ -231,6 +233,10 @@ namespace Bots.Grind
                                         )
                                     )
                                 ),
+                                // Dense-pack isolation is opt-in per routine. It owns only
+                                // the approach/opener/retreat episode; ordinary pulls remain
+                                // the fallback whenever no isolation plan is active.
+                                PullIsolationCoordinator.CreatePreCombatBehavior(),
                                 // Pull if ready
                                 new Decorator(
                                     ctx => CanPull(),
@@ -239,28 +245,40 @@ namespace Bots.Grind
                             ))
                         )
                     ),
-                    // In combat: Heal, CombatBuff, Combat
-                    // combat branch: only run when we have a valid first target
-                new Decorator(
-                        ctx =>
-                        {
-                            bool combat = StyxWoW.Me.Combat || (StyxWoW.Me.GotAlivePet && StyxWoW.Me.Pet.Combat);
-                            return !StyxWoW.Me.Mounted && combat &&
-                                   Targeting.Instance.FirstUnit != null;
-                        },
+                    // A transient targeting gap does not end observed ground combat.
+                    // Retain self-healing and ownership; only offensive leaves need a target.
+                    new Decorator(
+                        ctx => !StyxWoW.Me.Mounted && IsPlayerOrPetInCombat(),
                         new PrioritySelector(
                             new Decorator(
                                 ctx => StyxWoW.Me.Mounted,
                                 new TreeSharp.Action(ctx => Mount.Dismount("Combat"))
                             ),
                             Routine.HealBehavior,
-                            Routine.CombatBuffBehavior,
-                            Routine.CombatBehavior,
+                            // A successful ranged peel owns movement until the target is
+                            // separated or another mob joins. Healing still has priority.
+                            PullIsolationCoordinator.CreateRetreatBehavior(),
+                            new Decorator(
+                                ctx => Targeting.Instance.FirstUnit != null,
+                                new PrioritySelector(
+                                    Routine.CombatBuffBehavior,
+                                    Routine.CombatBehavior
+                                )
+                            ),
                             new ActionAlwaysSucceed()
                         )
                     )
                 )
             );
+        }
+
+        private static bool IsPlayerOrPetInCombat()
+        {
+            var player = StyxWoW.Me;
+            if (player == null)
+                return false;
+            var pet = player.GotAlivePet ? player.Pet : null;
+            return player.Combat || (pet != null && pet.Combat);
         }
 
         private static bool CanPull()

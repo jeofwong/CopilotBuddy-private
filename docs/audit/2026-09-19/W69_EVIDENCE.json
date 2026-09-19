@@ -1,0 +1,71 @@
+{
+  "schema": "copilotbuddy-audit-evidence-v1",
+  "checkpoint": "W69",
+  "date": "2026-09-19",
+  "repo": "jeofwong/CopilotBuddy-private",
+  "pr": 51,
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "verified": {
+    "sha": "0640174f5b128ea466059c30493702a00307a478",
+    "tree": "6e2fca4209af9be109907e1ce5d902d303359040",
+    "integrated": {
+      "run_id": 35423774281,
+      "artifact_id": 10578017430,
+      "conclusion": "success"
+    },
+    "host": {
+      "run_id": 35423774279,
+      "artifact_id": 10578222288,
+      "conclusion": "success"
+    }
+  },
+  "retained_groups": {
+    "pull_isolation": "12/12",
+    "aura_count_safety": "8/8",
+    "collectthings_breath": "7/7",
+    "quest_strategy_execution": "9/9",
+    "equipment_observation": "65/65",
+    "equipment_hand": "38/38"
+  },
+  "implemented": [
+    "bounded authoritative UseItemOn acknowledgement and source-bound profile execution",
+    "execution fingerprint includes bound strategy bytes while no-pack dataset identity stays legacy-compatible",
+    "open-world opt-in dense-pack isolation owner with normal Retribution Exorcism provider",
+    "bounded client aura count before allocation",
+    "uncapped long-route CollectThings breath recovery budget with 30s minimum"
+  ],
+  "log_reconciliation": {
+    "captured_logs": 62,
+    "oversized_read_via_git_blob": true,
+    "source_addressed": [
+      "ForcedBehaviorExecutor iterator storm",
+      "Retribution missing-target NRE storm",
+      "ManaPer5Sec legacy stat spelling",
+      "GetAllAuras unbounded allocation"
+    ],
+    "open": [
+      "Roslyn MetadataReference OOM during repeated PluginManager.RefreshPlugins",
+      "navigation/stuck/transport recurrence",
+      "plugin/root latency"
+    ]
+  },
+  "clarified": {
+    "pallypower": "version-pinned read-only Wrath bridge exists; live/roster acceptance remains open",
+    "carbonite": "quarantined hints and WorldMapArea XY candidate conversion exist; raw decoder/terrain/runtime authority remains open",
+    "equipment": "observation/hand/reward identity partial support only; cap/loadout/proficiency optimization remains open",
+    "escort": "behavior coverage exists but automatic strategy schema/execution is insufficient and remains unwired"
+  },
+  "recovery": {
+    "github_polling": "short one-shot status reads keyed by exact run ID and head SHA; bounded retries; no blind reruns",
+    "hard_turn_termination": "requires a new user turn; W69 is the durable recovery source"
+  },
+  "claims_not_made": [
+    "full all-class combat support",
+    "full escort/event/gossip support",
+    "optimal DPS or gear valuation",
+    "runtime Carbonite terrain authority",
+    "complete underwater/navigation support",
+    "original-client or live-server acceptance",
+    "master merge or deployment"
+  ]
+}

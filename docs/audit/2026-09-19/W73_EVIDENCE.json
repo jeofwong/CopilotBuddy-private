@@ -1,0 +1,77 @@
+{
+  "schema": "copilotbuddy-audit-evidence-v1",
+  "checkpoint": "W73",
+  "date": "2026-09-19",
+  "repo": "jeofwong/CopilotBuddy-private",
+  "pr": 51,
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "verified": {
+    "sha": "3c76cddb12dbaef94ae7e6f121bb2678387f3471",
+    "tree": "154ce386ab94df0065b27a87c66c1416caa01847",
+    "integrated": {
+      "run_id": 35432153183,
+      "artifact_id": 10580649556,
+      "digest": "sha256:70ceb1c8ae0f031e25844cd461e46cf8d0279167e22fa20b959a62fdfeb8d055",
+      "conclusion": "success",
+      "entries": "17/17"
+    },
+    "host": {
+      "run_id": 35432153030,
+      "artifact_id": 10580249866,
+      "digest": "sha256:6ba4a24e2e4c4702459d3966171442019571ec4a8b845f77e4089bb3db300306",
+      "errors": 0,
+      "warnings": 3342,
+      "conclusion": "success"
+    }
+  },
+  "red_green": {
+    "test_sha": "9875ab34fb3de0dec245c803c64a635d1c0ede87",
+    "red_integrated": {
+      "run_id": 35431946631,
+      "artifact_id": 10580863879,
+      "digest": "sha256:be96c4fc86a8b08d39cfb165e628bd838deb5da7144800d79d6ce9719ecab686",
+      "result": "Container slot identity 9/16; 7 intended assertions; 0 unexpected"
+    },
+    "red_host": {
+      "run_id": 35431946628,
+      "artifact_id": 10580664206,
+      "digest": "sha256:d0d24ef33a469264a1b1925d9656e07ccb6807c5fc21071ffce9063aa86a0b9b",
+      "conclusion": "success"
+    },
+    "production_sha": "3c76cddb12dbaef94ae7e6f121bb2678387f3471"
+  },
+  "retained_groups": {
+    "container_slot_identity_and_pickup": "16/16",
+    "active_parent": "39/39",
+    "dependent_previous_alternatives": "14/14",
+    "negative_exclusive_dependencies": "10/10"
+  },
+  "original_client_ui": "d0339b17b0221db76e6acd2dc2915d224a5b62ca",
+  "implemented": [
+    "BuildValidatedContainerPickupLua",
+    "empty-cursor fail-closed ownership through GetCursorInfo",
+    "expected-entry validation before PickupContainerItem",
+    "CursorHasItem acknowledgement",
+    "WoWItem.TryPickUp with GUID slot resolution and revalidation",
+    "compatibility PickUp wrapper without independent BagIndex/BagSlot submission"
+  ],
+  "next": {
+    "owner": "runtime-snapshot/Quest Behaviors/DeleteItems.cs",
+    "issue": "one-shot PickUp/DeleteCursorItem in OnStart marks done without confirmation or deletion acknowledgement",
+    "separate_after": [
+      "MrItemRemover2",
+      "EquipItem",
+      "AutoEquip2",
+      "AuctionHouse",
+      "ProfessionBuddy cursor transactions"
+    ]
+  },
+  "claims_not_made": [
+    "same-entry ABA immunity",
+    "destructive delete confirmation ownership",
+    "equip or auction transaction acknowledgement",
+    "multi-step cursor transaction safety",
+    "live original-client acceptance",
+    "master merge or deployment"
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "schema": 1,
+  "scope": "Recorded Windows execution and exact-source verification; not live addon/game/server acceptance",
+  "artifacts": {
+    "red": {
+      "file": "w62-addon-red-a54bd21d.zip",
+      "sha256": "619dd63f6d2322a3aafdfb4ba389672d21c3fcba79717c05d4c46ed2845381c0",
+      "commit": "a54bd21dc5e3d2ef6838fe4f6d8da1992a0ccb40",
+      "run_id": 35311539169,
+      "artifact_id": 10533780541,
+      "members": 149,
+      "crc_verified": true,
+      "tree": "5e48539a30d820742cd74ffbd30d6f69e24c5b19",
+      "source_index_entries": 1780,
+      "normalized_members": 104,
+      "internal_manifest_entries": 148,
+      "aggregate_groups": 92,
+      "analyzer_tests": 74,
+      "passing_entries": 16,
+      "new_cases_passed": 3,
+      "new_cases_total": 24,
+      "intended_assertions": 21,
+      "unexpected": 0
+    },
+    "green": {
+      "file": "w62-addon-green-a4d82ce7.zip",
+      "sha256": "3866cd3ea66c1cf5ada2b1a799fc8531ef26daad16cbf0e2c431a50e51a8aa39",
+      "commit": "a4d82ce7ff3cee703bc6e64fa521141fb2e04dc9",
+      "run_id": 35312015670,
+      "artifact_id": 10533840947,
+      "members": 149,
+      "crc_verified": true,
+      "tree": "6ebe86b159f196fe3d14734f0b0aff45874aeb47",
+      "source_index_entries": 1780,
+      "normalized_members": 104,
+      "internal_manifest_entries": 148,
+      "aggregate_groups": 92,
+      "analyzer_tests": 74,
+      "passing_entries": 17,
+      "new_cases_passed": 24,
+      "new_cases_total": 24,
+      "intended_assertions": 0,
+      "unexpected": 0
+    },
+    "host": {
+      "file": "w62-host-green-a4d82ce7.zip",
+      "sha256": "aca28821258874f4963403d00fc28a90773402ab8220362d85a784f53b77e628",
+      "commit": "a4d82ce7ff3cee703bc6e64fa521141fb2e04dc9",
+      "run_id": 35312015667,
+      "artifact_id": 10534325066,
+      "members": 4,
+      "crc_verified": true,
+      "tests_run": false,
+      "game_attached": false,
+      "host_build_exit_code": 0,
+      "warnings": 3292,
+      "errors": 0,
+      "internal_manifest": null
+    }
+  },
+  "changed_source_inputs": [
+    "Bots/Quest/PublishedQuestRoot.cs"
+  ],
+  "identical_normalized_members": 104,
+  "retained_aggregate_outcomes_identical": 91,
+  "source_payloads": {
+    "before": {
+      "path": "sources/before/Bots/Quest/PublishedQuestRoot.cs",
+      "sha256": "0ece859a86b44f9d42fe01dac319451a3df735012a2054ef166dd0e086a7e963",
+      "git_blob": "06ab9f9dda109dae5cca08ffa14be585adc39f8b"
+    },
+    "after": {
+      "path": "sources/after/Bots/Quest/PublishedQuestRoot.cs",
+      "sha256": "bc2b1bddbee7307dd9744bfb360a52ccb0555cc2502ac1814f2262ee2b5b1310",
+      "git_blob": "633d8095c035d92228b4385d6bd32ebcc458967b"
+    },
+    "test": {
+      "path": "sources/Tools/WholesomeQuestRecoveryRegressionTests/QuestAddonConflictRegressionTests.cs",
+      "sha256": "b827927e41aad54b707c0638d9616a7e9da0b80b28d50b5e935ba88411f8acbc",
+      "git_blob": "427ed1526a19490f338d1943064ae315bbca3d9d"
+    }
+  },
+  "master_merged": false,
+  "live_game": false,
+  "independent_approval": false,
+  "full_addon_importer": false,
+  "all_class_buff_bridge": false,
+  "exhaustive_complete": false,
+  "verified": true
+}

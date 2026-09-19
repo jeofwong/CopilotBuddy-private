@@ -1,0 +1,13 @@
+# CopilotBuddy audit — W56 verified combat sight and movement
+
+Continue **draft PR51**, branch `audit/next-55-equipment-observation-20260917`, in `jeofwong/CopilotBuddy-private` (ID1367174964). Read `docs/audit/WOTLK_335A_RESEARCH_POLICY.md`, `docs/audit/2026-09-17/W56_CHECKPOINT.md`, `W56_EVIDENCE.json`, `W56_LOS_REVIEW.md`, then NEXT_CHAT_PROMPT.md. Original WoW3.3.5a build12340 only. Re-read live refs before writing.
+
+**PR47 is already merged** as master `f462a9bb4eb18acac9069f495177df35672286d5`; do not repeat that merge or trust its stale pre-merge description. Its original post-merge integrated run35211182024/art10491763404 was recovered and verified17/17. Preserve the master README edit and backups c43c50d8/8382a7ec/518baec5. Exclude25/43/45; historical44 is already integrated.
+
+Latest verified follow-up code **6e9049c1297058bf7128114e88a87bb7fcf2eafc**, tree9b8189c8a43b9014954dc18b5a63f70830ebf37c. W56 adds two actual unchanged-fixture repairs: shared spell-sight dispatch24/53->53/53 (29 intended assertions,0unexpected); complete Movement owner33/74->74/74 (41 intended assertions,0unexpected). Final17 integrated entries and85 aggregate groups pass;1766 source/config hashes,97 normalized members and141 manifest entries verified. Host compiles with0 errors/3296 warnings. No separate focused job was launched; its four projects are included in integrated execution.
+
+The Movement tests preserve Druid Rebirth's dead-friendly approach, reject swallowed owner errors, and verify one selector evaluation instead of four. The helper does not interrupt active casts/channels, does not treat failed paths as Success, and does not stop behind a wall merely because in range. The cast helper rechecks its existing admission after setup/logging. Native masks/offsets, existing spell-specific/self/melee exceptions and workflows were not changed.
+
+W55 equipment observations/slot/hand replacement fixes remain. No pending unexecuted test remains at the verified code revision; subsequent checkpoint commits are documentation only. Public CI and native GitHub writes worked. PR51 is separate and unmerged; no new merge/deployment/force push occurred here. Archive prior root pointers under `docs/audit/2026-09-17/pre-w56/`.
+
+Read the LOS review before further fixes: native result freshness and mask validation, safe alternate casting positions/progress deadlines, off-target facing, ground-cursor ownership, and later actor/aura revalidation remain. Automatic escort/event strategies, all-spec buff coordination, unified equipment/reward policy, underwater escape, remaining upstream/native work, independent review and original-client acceptance also remain. Helper tests are not complete obstacle recovery, maximum DPS or exhaustive completion.

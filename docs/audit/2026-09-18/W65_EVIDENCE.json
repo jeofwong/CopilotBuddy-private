@@ -1,0 +1,146 @@
+{
+  "schema": 1,
+  "code_commit": "67be2b9eb430d31fb52d5e12c00a94d0e2eb9907",
+  "code_tree": "d60c801853f857ec50037b7d42ad61eb309e5709",
+  "test_commit": "a25c46601e2f17575842f0b1941e81f47033c42c",
+  "scope": "Original newly executed Windows x86 phase-composition regression; native leaves controlled, no live client/server or acknowledgement",
+  "artifacts": [
+    {
+      "phase": "w64-passing",
+      "file": "w64-integrated-passing-attempt2-4320f619.zip",
+      "run_id": 35338415023,
+      "attempt": 2,
+      "artifact_id": 10544426266,
+      "sha256": "3d70a4b0f1ead2ee71145012bf66128f90df521d2d41450514488d510cb8f77f",
+      "bytes": 673818,
+      "commit": "4320f619e0ee6a58dd848ce9d993dcc93489c9cf",
+      "tree": "4f677d888a737f14d5b5bfb202417786efe1accb"
+    },
+    {
+      "phase": "w64-failed-attempt",
+      "file": "w64-merchant-repair-analyzer-failure-attempt1.zip",
+      "run_id": 35338415023,
+      "attempt": 1,
+      "artifact_id": 10543912635,
+      "sha256": "58e515208d9f089e5ab3d43dfdb325082b30a94b204a2ac87456f79a4ac0536b",
+      "bytes": 673840,
+      "commit": "4320f619e0ee6a58dd848ce9d993dcc93489c9cf",
+      "tree": "4f677d888a737f14d5b5bfb202417786efe1accb"
+    },
+    {
+      "phase": "red",
+      "file": "w65-gatherbuddy-sale-red-a25c4660.zip",
+      "run_id": 35344230695,
+      "attempt": 1,
+      "artifact_id": 10546657555,
+      "sha256": "0e55f8daa5ac1d2fe01ef1ca24a6ae9e596b9a458da8cac76c7093fe2c5a539a",
+      "bytes": 678684,
+      "commit": "a25c46601e2f17575842f0b1941e81f47033c42c",
+      "tree": "2c98e035f4c71348f999f41419afa2cb0b0a7305"
+    },
+    {
+      "phase": "w65-failed-attempt",
+      "file": "w65-sale-repair-attempt1-67be2b9e.zip",
+      "run_id": 35345417008,
+      "attempt": 1,
+      "artifact_id": 10547260118,
+      "sha256": "14706d241bccf62584130bce6d3340e736b6a02704cc102a5630896aa10bab74",
+      "bytes": 677301,
+      "commit": "67be2b9eb430d31fb52d5e12c00a94d0e2eb9907",
+      "tree": "d60c801853f857ec50037b7d42ad61eb309e5709"
+    },
+    {
+      "phase": "green",
+      "file": "w65-sale-repair-attempt2-67be2b9e.zip",
+      "run_id": 35345417008,
+      "attempt": 2,
+      "artifact_id": 10547520570,
+      "sha256": "7f459a18c8b4e0d145762a112f3c1b9f358f78cf1ec9a8317c183d2fe1fda13b",
+      "bytes": 677630,
+      "commit": "67be2b9eb430d31fb52d5e12c00a94d0e2eb9907",
+      "tree": "d60c801853f857ec50037b7d42ad61eb309e5709"
+    },
+    {
+      "phase": "host",
+      "file": "w65-host-67be2b9e.zip",
+      "run_id": 35345417019,
+      "attempt": 1,
+      "artifact_id": 10545824241,
+      "sha256": "77126bfff4c53448d2a69e16007ac659758233752962ada933ad53d7f4ed5a01",
+      "bytes": 85578,
+      "commit": "67be2b9eb430d31fb52d5e12c00a94d0e2eb9907",
+      "tree": "d60c801853f857ec50037b7d42ad61eb309e5709"
+    }
+  ],
+  "new_group": {
+    "red": "4/20;16 intended assertions;0 unexpected",
+    "green": "20/20;0 assertions;0 unexpected"
+  },
+  "integrated": {
+    "entries": 17,
+    "groups": 101,
+    "analyzer_tests": 74,
+    "inner_manifest": 157,
+    "indexed_inputs": 1790,
+    "normalized_members": 113
+  },
+  "host": {
+    "errors": 0,
+    "warnings": 3304,
+    "tests_run": false,
+    "game_attached": false
+  },
+  "repair_delta": {
+    "changed_existing_inputs": [
+      "Bots/Gatherbuddy/GatherbuddyBot.cs"
+    ],
+    "added_inputs": [],
+    "removed_inputs": [],
+    "unchanged_common_inputs": 1789,
+    "original_tests_unchanged": true,
+    "workflows_unchanged": true,
+    "normalized_sets_identical": true,
+    "normalized_common_byte_identical": 113,
+    "normalized_common_changed": []
+  },
+  "unchanged_rerun_delta": {
+    "changed_existing_inputs": [],
+    "added_inputs": [],
+    "removed_inputs": [],
+    "unchanged_common_inputs": 1790,
+    "original_tests_unchanged": true,
+    "workflows_unchanged": true,
+    "normalized_sets_identical": true,
+    "normalized_common_byte_identical": 113,
+    "normalized_common_changed": []
+  },
+  "test_only_delta": {
+    "changed_existing_inputs": [],
+    "added_inputs": [
+      "Tools/WholesomeQuestRecoveryRegressionTests/GatherbuddySellPhaseRegressionTests.cs"
+    ],
+    "removed_inputs": [],
+    "unchanged_common_inputs": 1789,
+    "original_tests_unchanged": true,
+    "workflows_unchanged": true,
+    "normalized_sets_identical": false,
+    "normalized_common_byte_identical": 110,
+    "normalized_common_changed": [
+      "normalized/WholesomeQuestRecoveryRegressionTests/W42Normalized/W42PostInitializationGroups.cs",
+      "normalized/WholesomeQuestRecoveryRegressionTests/W42Normalized/normalization-manifest.json"
+    ]
+  },
+  "original_blob": "c7ee45154129563a09072db9c62298a88d61fd85",
+  "repaired_blob": "791e8511312a215854574cbc9a46c04832c8df83",
+  "fixture_sha256": "cfc4780913e4eb79d8801fdbb94253bdadb961da0f021a2ce32ed2de8b7ae330",
+  "analyzer_instability": {
+    "w64": "test_excludes_binary_assets:0!=1",
+    "w65": "test_no_wtf_read_or_toc_path_following:IndexError",
+    "cause": "unproven",
+    "analyzer_repair": false,
+    "both_failed_archives_retained": true
+  },
+  "native_acceptance": false,
+  "independent_review": false,
+  "exhaustive_complete": false
+}

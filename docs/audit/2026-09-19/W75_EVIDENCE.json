@@ -1,0 +1,76 @@
+{
+  "schema": "copilotbuddy-audit-evidence-v1",
+  "checkpoint": "W75",
+  "date": "2026-09-19",
+  "repo": "jeofwong/CopilotBuddy-private",
+  "pr": 51,
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "verified": {
+    "sha": "4e7c7699d577bbc6922bdbc12adea30e17c12450",
+    "tree": "ffd735430f64cdfdf91af3ce3d1d41d2f53f94db",
+    "integrated": {
+      "run_id": 35436934243,
+      "artifact_id": 10582366699,
+      "digest": "sha256:c71541514dd21642bc2570f91a0e7d637aaf88bedd7bffb8fb73a734687598ed",
+      "conclusion": "success",
+      "entries": "17/17"
+    },
+    "host": {
+      "run_id": 35436934248,
+      "artifact_id": 10582840978,
+      "digest": "sha256:4f8b1437a19cdc8a6f36e69792360cab1dac1d21c2c23dfdec18d2ad3ddcab8d",
+      "conclusion": "success"
+    },
+    "container_slot_identity": "20/20; assertions=0; unexpected=0",
+    "mr_item_remover_delete": "14/14; assertions=0; unexpected=0"
+  },
+  "clean_red": {
+    "sha": "f0b2cba9479a11d7538c8a01a17346f42e13c43d",
+    "integrated": {
+      "run_id": 35436213745,
+      "artifact_id": 10582725289,
+      "digest": "sha256:51eb916291c044910be6561d5f88da2df0c50a76cd2ae6ee3a56f0bf354a05d7",
+      "result": "2/14; 12 intended assertions; 0 unexpected; plugin compiled"
+    },
+    "host_run_id": 35436213791
+  },
+  "production_commits": {
+    "quest_info_boundary": "7cb5dcbc719a3a73f8db0ecd1f0484104a4e24d8",
+    "delete_owner": "6335967d3ab6f6be18701c0e99e55d51be00a1bd",
+    "plugin_lifecycle": "4e7c7699d577bbc6922bdbc12adea30e17c12450"
+  },
+  "original_client_ui": "d0339b17b0221db76e6acd2dc2915d224a5b62ca",
+  "implemented": [
+    "validated GetContainerItemQuestInfo GUID/slot/entry boundary",
+    "single pending MrItemRemover delete GUID+entry owner",
+    "TryPickUp gating without ClearCursor",
+    "exact cursor item entry validation before DeleteCursorItem",
+    "exact DELETE_ITEM/DELETE_GOOD_ITEM popup handling",
+    "DELETE_ITEM_CONFIRM_STRING edit-box confirmation",
+    "cursor release plus physical GUID absence acknowledgement",
+    "bounded pending delete lifecycle",
+    "disable reset without cursor theft",
+    "fail-closed quest-item protection on unstable slot identity"
+  ],
+  "next": {
+    "owners": [
+      "runtime-snapshot/Quest Behaviors/EquipItem.cs",
+      "runtime-snapshot/Plugins/AutoEquip2/AutoEquip.cs"
+    ],
+    "issues": [
+      "fire-and-forget equip completion",
+      "independent BagIndex/BagSlot derivation",
+      "ClearCursor ownership theft",
+      "generic StaticPopup1Button1 click",
+      "missing exact item/cursor/equipment acknowledgement"
+    ]
+  },
+  "claims_not_made": [
+    "live original-client deletion acceptance",
+    "same-entry ABA immunity",
+    "cross-plugin cursor transaction safety",
+    "equip transaction safety",
+    "auction transaction safety",
+    "master merge or deployment"
+  ]
+}

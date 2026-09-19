@@ -104,7 +104,7 @@ public static class QuestPrerequisiteAuthority
             knownQuestIds = _publishedQuestIds;
             publishedAuthority = _publishedDependencyAuthority;
         }
-        if (!publishedAuthority)
+        if (!publishedAuthority || questId == 0 || Array.BinarySearch(knownQuestIds, questId) < 0)
             return QuestPrerequisiteStatus.Unknown;
         return Traverse(questId, published, activeQuestIds, knownQuestIds);
     }

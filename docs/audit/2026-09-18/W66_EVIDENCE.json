@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "repository": "jeofwong/CopilotBuddy-private",
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "master": "f462a9bb4eb18acac9069f495177df35672286d5",
+  "reconciled_from": "2f4bf14e4bd2838e083096fa74de065cf3f4063a",
+  "pre_w66_head": "ee815560dfaba3b69d7c5936cbbfa9c9a1398cd3",
+  "reviewed_intervening_commits": [
+    "c1efc6288a2a64f125844858223a9baf936f4b15",
+    "d51a65213cb072f1765f0efe03f28300739e156a",
+    "4c6b1b2e75af4dd0eaffde11d38ebbc84a21f4c0",
+    "5b7ee98d9560d14221875632beabbc50d4f79c0d",
+    "1607a7f843fb4d74a9dddfc9ce5d8121425bc2ee",
+    "4c89949ba16dd70e125990424c515719b921eb79",
+    "83dcafd3d8e3538d2f15c919c7f03855bef83640",
+    "ee815560dfaba3b69d7c5936cbbfa9c9a1398cd3"
+  ],
+  "w66": {
+    "test_only": "b0c4b7c93ec14b6a4c7683df6897f545bfbfd498",
+    "production": "42f382237cebb2a100cd8b9d72f801d815e1bd2d",
+    "fixture_correction": "37511a5f0a4db7b8fe91efd1475f8d2700cad4f6",
+    "final_tree": "71de8d71865929a8b8938ccdd8180b8e76c66ecc",
+    "red": {
+      "run_id": 35358935120,
+      "artifact_id": 10553796622,
+      "sha256": "8ab413c7a9d58a1a48accd6ae4d38530e85110259b57cb4601e437168e0a86f0",
+      "cases": "1/9",
+      "assertions": 8,
+      "unexpected": 0
+    },
+    "first_green_attempt": {
+      "commit": "42f382237cebb2a100cd8b9d72f801d815e1bd2d",
+      "cases": "8/9",
+      "fixture_failure": "exact whitespace check for Start reset",
+      "analyzers": "75/75"
+    },
+    "final_integrated": {
+      "run_id": 35360041922,
+      "artifact_id": 10553948558,
+      "sha256": "fd536ab64c075d43f9f967d929b61574ac30116d3681bb3dfc82601e585c24ae",
+      "entries": "17/17",
+      "cases": "9/9",
+      "wholesome_groups": 101,
+      "questlog_groups": 3,
+      "analyzers": "75/75",
+      "source_index_entries": 1793,
+      "normalized_file_members": 116,
+      "files_sha256_entries": 160,
+      "game_attached": false
+    },
+    "host": {
+      "run_id": 35360041925,
+      "artifact_id": 10553963467,
+      "sha256": "6ca4ec4697f452da2434d799d57fd5a60c2a1e0e4b33e507f63f41fa0b008eee",
+      "warnings": 3304,
+      "errors": 0,
+      "tests_run": false
+    }
+  },
+  "boundaries": [
+    "persistent unknown/locked single-session liveness",
+    "post-submission result loss",
+    "physical slot/item identity and cursor freshness",
+    "LevelBot full-bag policy",
+    "bulk void outcome completeness",
+    "native/client/server acceptance"
+  ],
+  "exhaustive_complete": false
+}

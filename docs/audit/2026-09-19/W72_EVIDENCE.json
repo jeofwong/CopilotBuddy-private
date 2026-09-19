@@ -1,0 +1,99 @@
+{
+  "schema": "copilotbuddy-audit-evidence-v1",
+  "checkpoint": "W72",
+  "date": "2026-09-19",
+  "repo": "jeofwong/CopilotBuddy-private",
+  "pr": 51,
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "verified": {
+    "sha": "7a471da4d674ca1dffdc6169340b091e96a36e46",
+    "tree": "3bafec33ca952646ff1093f2a4a84d9a82c9e1bf",
+    "integrated": {
+      "run_id": 35431678604,
+      "artifact_id": 10580349205,
+      "digest": "sha256:87845c7744dfd9d2f34bef922b08d11857966dae7b94cf93de2286c2311d61af",
+      "conclusion": "success",
+      "entries": "17/17"
+    },
+    "quest_log_owner": {
+      "run_id": 35431678616,
+      "artifact_id": 10579879846,
+      "digest": "sha256:947d2e289ef8d6515d03df30774cbe0fa21be0bf27130b86bc0b8d35006e0d61",
+      "conclusion": "success"
+    },
+    "host": {
+      "run_id": 35431678735,
+      "artifact_id": 10580898437,
+      "digest": "sha256:c5ed190674d58fceb2426e70c611faacd6de8cdce0e9fa96c224e29bf3899347",
+      "errors": 0,
+      "warnings": 3340,
+      "conclusion": "success"
+    }
+  },
+  "red_green": {
+    "initial_ready_red": {
+      "sha": "00ddb5aaed33eb5f8b4cb32dfe1c72ee8e79f831",
+      "run_id": 35431251731,
+      "artifact_id": 10580279009,
+      "result": "ActiveParent 30/34; 4 intended assertions; 0 unexpected"
+    },
+    "strengthened_red": {
+      "sha": "57ca3e177d07a525bacefa3b40df51a73daeb632",
+      "integrated_run_id": 35431490715,
+      "integrated_artifact_id": 10579854779,
+      "integrated_digest": "sha256:1f8bd87416c9474fe1110d874c9e14097bf21222c94a6fb383ad6aca5e7b666d",
+      "active_parent": "30/39; 9 intended assertions; 0 unexpected",
+      "owner_run_id": 35431490687,
+      "owner_artifact_id": 10580443591,
+      "owner_digest": "sha256:bffeb854247259e6e966beda2415295bef45dba75ad6d524a4a455ad78f1d2f2",
+      "quest_log_observation": "26/27; missing FailedQuestIds only"
+    },
+    "production_sha": "7a471da4d674ca1dffdc6169340b091e96a36e46"
+  },
+  "retained_groups": {
+    "active_parent": "39/39",
+    "dependent_previous_alternatives": "14/14",
+    "negative_exclusive_dependencies": "10/10",
+    "container_slot_identity": "9/9",
+    "quest_log_observation": "27/27",
+    "raw_ready": "16/16",
+    "singular_required_registrations": "189/189"
+  },
+  "pinned_sources": {
+    "trinitycore_335": "8fda442f6c30ca21a622638063ab8b28376f1b25",
+    "azerothcore_wotlk": "8337a378ac325e62a6a91e00c6a5e944205e8536",
+    "original_client_ui": "d0339b17b0221db76e6acd2dc2915d224a5b62ca"
+  },
+  "implemented": [
+    "immutable raw FailedQuestIds in QuestLogSnapshot",
+    "live failed quest status carried into QuestSchedulerAcceptedQuest",
+    "TC-primary negative direct PrevQuestID requires accepted incomplete parent"
+  ],
+  "next": {
+    "owner": "Styx/WoWInternals/WoWObjects/WoWItem.cs",
+    "scope": "safe single-item pickup with empty cursor only",
+    "original_client_apis": [
+      "GetCursorInfo",
+      "GetContainerItemLink",
+      "PickupContainerItem",
+      "CursorHasItem"
+    ],
+    "separate_callers": [
+      "DeleteItems",
+      "MrItemRemover2",
+      "EquipItem",
+      "AutoEquip2",
+      "AuctionHouse",
+      "ProfessionBuddy cursor transactions"
+    ]
+  },
+  "claims_not_made": [
+    "AzerothCore negative-parent parity",
+    "complete server prerequisite reconstruction",
+    "destructive deletion acknowledgement",
+    "equip/auction/cursor transaction safety",
+    "same-entry ABA immunity",
+    "live original-client/server acceptance",
+    "master merge or deployment"
+  ]
+}

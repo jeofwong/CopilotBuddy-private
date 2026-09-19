@@ -1,0 +1,93 @@
+{
+  "schema": "copilotbuddy-audit-evidence-v1",
+  "checkpoint": "W74",
+  "date": "2026-09-19",
+  "repo": "jeofwong/CopilotBuddy-private",
+  "pr": 51,
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "verified": {
+    "sha": "67411dbbd765a6d781809b7c18d4ca8e1a20d24a",
+    "tree": "2878b68b99bacf93079f48c1a99efacff803aa61",
+    "integrated": {
+      "run_id": 35435502277,
+      "artifact_id": 10582149126,
+      "digest": "sha256:5ce7c69ba18e50ee509f7d5d4fb77ecfe7773eb67ac3439f89cdd2a62e84f40d",
+      "conclusion": "success",
+      "entries": "17/17"
+    },
+    "host": {
+      "run_id": 35435502301,
+      "artifact_id": 10581398494,
+      "digest": "sha256:29e96e44f62740e61ed7607490eb4ea9deb824c975f2acb497bc27be2f224cf7",
+      "conclusion": "success"
+    },
+    "deleteitems": "12/12; assertions=0; unexpected=0"
+  },
+  "post_w73_cursor_ack": {
+    "production_sha": "fb746ecdb07d08d10a343c694d2042e59ce387e2",
+    "integrated": {
+      "run_id": 35433303671,
+      "artifact_id": 10582155861,
+      "digest": "sha256:427ff22a561486e0968e2b79ae7943920a7615e16e810aba4d6d45f350279ea0",
+      "conclusion": "success"
+    },
+    "host": {
+      "run_id": 35433303565,
+      "artifact_id": 10581741166,
+      "digest": "sha256:b2a3a126c45a2ed5a1176a7a1d2a95ee36dfcc84efba4d88d2133347ea0b8904",
+      "conclusion": "success"
+    }
+  },
+  "deleteitems_red_green": {
+    "clean_red_sha": "fd7d6f20050bcd7d37b7dd1fb88898c12c8a2ffc",
+    "red_integrated": {
+      "run_id": 35435022827,
+      "artifact_id": 10581607785,
+      "digest": "sha256:ec4538e330a9565056344b65b27c2bbf3bfad51778b7f6f77c9395021b474848",
+      "result": "2/12; 10 intended assertions; 0 unexpected; production compiler succeeded"
+    },
+    "red_host": {
+      "run_id": 35435022646,
+      "artifact_id": 10581378060,
+      "digest": "sha256:cc835c556ff72e87d770a689293ea05c0058dd7f820bb4fb479f4c6f1e45bb8d",
+      "conclusion": "success"
+    },
+    "production_sha": "153128f726d9f1c47117dfe3adc974db163b36cd",
+    "intermediate_integrated": {
+      "run_id": 35435314165,
+      "artifact_id": 10582158833,
+      "digest": "sha256:16bc61d071eb344906e36b5d455e5928e3dd581d58405e2c782da547d108c3b0",
+      "result": "9/12; remaining 3 were helper-region test locator errors"
+    },
+    "test_anchor_sha": "67411dbbd765a6d781809b7c18d4ca8e1a20d24a"
+  },
+  "original_client_ui": "d0339b17b0221db76e6acd2dc2915d224a5b62ca",
+  "implemented": [
+    "tick-owned DeleteItems destructive lifecycle",
+    "TryPickUp success gating without ClearCursor",
+    "exact pending GUID and entry ownership",
+    "owned cursor-entry revalidation before DeleteCursorItem",
+    "exact DELETE_ITEM and DELETE_GOOD_ITEM popup identity",
+    "DELETE_ITEM_CONFIRM_STRING high-quality confirmation",
+    "cursor-release plus GUID-disappearance acknowledgement",
+    "bounded pickup-refusal and pending confirmation lifetimes",
+    "fail-closed bot stop on unresolved destructive ambiguity"
+  ],
+  "next": {
+    "owner": "runtime-snapshot/Plugins/MrItemRemover2",
+    "issues": [
+      "generic DELETE_ITEM_CONFIRM popup click",
+      "ClearCursor plus destructive delete sites",
+      "unguarded delete sites",
+      "independent BagIndex/BagSlot quest-item protection query"
+    ]
+  },
+  "claims_not_made": [
+    "live original-client deletion acceptance",
+    "same-entry ABA immunity",
+    "cross-plugin cursor transaction safety",
+    "MrItemRemover deletion safety",
+    "equip or auction transaction acknowledgement",
+    "master merge or deployment"
+  ]
+}

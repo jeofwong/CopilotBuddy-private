@@ -1,0 +1,79 @@
+{
+  "schema": "copilotbuddy-audit-evidence-v1",
+  "checkpoint": "W79-equip-popup-submission",
+  "repository": "jeofwong/CopilotBuddy-private",
+  "pr": 51,
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "previous_checkpoint_commit": "c041780c9fd03c81f569a4ed0cf70c04b1160181",
+  "verified_commit": "96d1259f1d3c7035b85b1fa4bf00d05fe52d4ee6",
+  "verified_tree": "bed704f539f0e21697cec2862906096d30139f03",
+  "red": {
+    "commit": "ae418d26cc3b980d6b3212a37ca7860125a7a8d2",
+    "tree": "fe8ef37476321ba4acf6040dd84bcc78e7cb867f",
+    "run": 35456262122,
+    "artifact": 10587819087,
+    "sha256": "968c98374605146952faf49e2d73d3290cec192a801bbed497b267e25611c9fb",
+    "result": "8/18; assertions=10; unexpected=0; all16 retained integrated peers pass",
+    "crc_verified": true,
+    "inner_hashes_verified": 184
+  },
+  "green": {
+    "run": 35456734949,
+    "artifact": 10587779649,
+    "sha256": "8dd192f459654e2e28420fd3e9b1bb08a6d7c09fe1c638b418ab6b9b12cfdb66",
+    "result": "18/18; assertions=0; unexpected=0; integrated17/17; all build/run exits0",
+    "crc_verified": true,
+    "inner_hashes_verified": 184,
+    "game_attached": false
+  },
+  "host": {
+    "run": 35456734963,
+    "artifact": 10588378360,
+    "sha256": "fcb527df8e4d566c29f4d380a7282801908b360d5d6641b26353b47868d0acfd",
+    "crc_verified": true,
+    "inner_manifest_present": false,
+    "build_exit": 0,
+    "warnings": 3344,
+    "errors": 0,
+    "tests_run": false,
+    "game_attached": false
+  },
+  "unchanged_fixture_pair": {
+    "indexed_inputs_each": 1822,
+    "only_changed_inputs": [
+      "runtime-snapshot/Plugins/AutoEquip2/AutoEquip.cs",
+      "runtime-snapshot/Quest Behaviors/EquipItem.cs"
+    ],
+    "identical_normalized_members": 140,
+    "tests_unchanged": true,
+    "workflows_unchanged": true,
+    "production_delta": "one existing _pendingEquipSubmitted guard per ConfirmOwnedEquipPopup; incidental EquipItem EOF newline removal"
+  },
+  "retained": {
+    "W78_normal_objective_restart": "37/37; assertions=0; unexpected=0",
+    "W77_collection_admission": "34/34; assertions=0; unexpected=0",
+    "Ret_registration": "9/9; assertions=0; unexpected=0",
+    "acknowledged_equip_timeout": "10/10; assertions=0; unexpected=0",
+    "analyzers": "89 tests; OK"
+  },
+  "execution_scope": "Verbatim tracked ConfirmOwnedEquipPopup and TickPendingEquip C# methods compiled and executed with controlled state/submission results and a recording Lua boundary. No Lua or native game operation executed by this new group.",
+  "claims_not_made": [
+    "physical displaced-item identity",
+    "same-slot foreign popup immunity after a legitimate submission",
+    "same-entry ABA immunity",
+    "global cross-plugin or reentrant-event ownership",
+    "native Lua or server acceptance",
+    "all legacy/generated quest profile restart correctness",
+    "Gordunni dig/spawn/loot capability",
+    "complete post-cutoff review or independent/live acceptance"
+  ],
+  "new_lua_api": false,
+  "lua_strings_changed": false,
+  "desktop_mouse_automation": false,
+  "auction_professionbuddy_expansion": false,
+  "direct_master_ref_observed": "b2324913e2499ba30b239dd67224ca2c655c05cc",
+  "master_written_this_continuation": false,
+  "merged": false,
+  "deployed": false,
+  "full_review_complete": false
+}

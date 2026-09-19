@@ -60,6 +60,7 @@ namespace Styx
         public bool IsValid { get; set; } = true;
         public bool IsAlive { get; set; } = true;
         public bool IsPlayer { get; set; }
+        public bool Elite { get; set; }
         public bool IsMoving { get; set; }
         public bool Fleeing { get; set; }
         public bool Combat { get; set; }
@@ -109,6 +110,13 @@ namespace Singular.Dynamics
 {
     public enum BehaviorType { Heal, Rest, Pull, Combat }
     public enum WoWContext { All, Normal, Battlegrounds, Instances }
+}
+namespace Singular
+{
+    public static class SingularRoutine
+    {
+        public static Singular.Dynamics.WoWContext CurrentWoWContext { get; set; } = Singular.Dynamics.WoWContext.Normal;
+    }
 }
 namespace Singular.Settings
 {

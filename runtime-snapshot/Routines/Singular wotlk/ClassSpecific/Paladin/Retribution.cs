@@ -61,6 +61,32 @@ namespace Singular.ClassSpecific.Paladin
 
         #region Normal Rotation
 
+        // Optional LevelBot dense-pack opener. This is intentionally not part
+        // of the normal Ret rotation: it provides one ranged damage submission,
+        // with no taunt and no melee closing, after LevelBot validates the pull point.
+        public static Composite CreateRetributionPaladinIsolationPull()
+        {
+            return new PrioritySelector(
+                Safers.EnsureTarget(),
+                Spell.WaitForCast(false, false),
+                Movement.CreateMoveToLosBehavior(),
+                Movement.CreateFaceTargetBehavior(),
+                Spell.Cast("Exorcism", ret => IsValidIsolationPullTarget())
+            );
+        }
+
+        private static bool IsValidIsolationPullTarget()
+        {
+            var me = StyxWoW.Me;
+            var target = me?.CurrentTarget;
+            return me != null && target != null &&
+                   SingularRoutine.CurrentWoWContext == WoWContext.Normal &&
+                   TalentManager.CurrentSpec == TalentSpec.RetributionPaladin &&
+                   target.IsValid && target.IsAlive && !target.IsPlayer && !target.Elite &&
+                   !me.IsMoving && !me.IsOnTransport &&
+                   target.Distance >= 7 && target.Distance <= 30;
+        }
+
         [Class(WoWClass.Paladin)]
         [Spec(TalentSpec.RetributionPaladin)]
         [Behavior(BehaviorType.Pull)]
@@ -152,7 +178,6 @@ namespace Singular.ClassSpecific.Paladin
                     Spell.BuffSelf("Divine Protection", ret => StyxWoW.Me.HealthPercent <= SingularSettings.Instance.Paladin.DivineProtectionHealthRet && !StyxWoW.Me.HasAura("Forbearance")),
 
                     //  Buffs
-                    Spell.BuffSelf("Retribution Aura"),
                     CreateRetributionSealBehavior(),
                     CreateManaRecoveryBehavior(),
 

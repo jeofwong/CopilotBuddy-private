@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "repository": "jeofwong/CopilotBuddy-private",
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "verified_code": "0efaa29cdae649b2fb3c0eba2c2e31f5a3dce310",
+  "verified_tree": "1eb88058a060339b30f01b6dc91738c49cf4c2cf",
+  "red": {
+    "commit": "a0074d1354bbdd215b91d0a2a6c559f650ce801c",
+    "run": 35413218193,
+    "artifact": 10575435780,
+    "sha256": "d4cae4f208d04d9412a64475a24de0d5473a18f9d6248cbce5c2caa28fb4cbe2"
+  },
+  "production": [
+    "5a3fb22d0c13038545dde85eea504095d4a770fa",
+    "485ff12db6b40289b95e30d17c3c0eed11f53a1c"
+  ],
+  "final_test": "0efaa29cdae649b2fb3c0eba2c2e31f5a3dce310",
+  "integrated": {
+    "run": 35413466475,
+    "artifact": 10574816771,
+    "sha256": "ce28c593d2908357f709784777165f6b446b89a0c279aca7348fe1421ace8a9b",
+    "conclusion": "success"
+  },
+  "host": {
+    "run": 35413466374,
+    "artifact": 10575620041,
+    "sha256": "95c57869cbdbe18f0ea49eb922cf48b5ca1bc2d18a73d892e496d57432313b3e",
+    "conclusion": "success",
+    "tests_run": false
+  },
+  "semantics": {
+    "legacy_default": "InvocationCount",
+    "authoritative": [
+      "ObjectiveProgress",
+      "QuestComplete"
+    ],
+    "invocation_is_server_credit": false
+  },
+  "next": "bounded post-submission acknowledgement liveness, then UseItemOn strategy-pack wiring",
+  "exhaustive_complete": false
+}

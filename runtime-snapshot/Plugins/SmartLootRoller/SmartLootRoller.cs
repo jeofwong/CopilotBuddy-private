@@ -183,6 +183,7 @@ namespace SmartLootRoller
                 }
 
                 bool matchesCriteria = false;
+                bool comparisonKnown = true;
 
                 // --- NEW PAWN SCORING LOGIC ---
                 if (PawnScorer.IsUsable(rollItemInfo, settings.AllowedArmor, settings.AllowedWeapons))
@@ -193,9 +194,16 @@ namespace SmartLootRoller
                     if (droppedScore > 0)
                     {
                         float equippedScore = PawnScorer.GetMinEquippedScore(rollItemInfo.InventoryType, weights);
-                        
+                        // Missing equipment is not a confirmed non-upgrade. Preserve
+                        // Greed/Pass fallback, but never infer permission to disenchant.
+                        comparisonKnown = !float.IsNaN(equippedScore) && !float.IsInfinity(equippedScore);
+
                         // Give a tiny 1% buffer to avoid rolling on sidegrades, unless equipped is 0.
-                        if (equippedScore == 0 || droppedScore > equippedScore * 1.01f)
+                        if (!comparisonKnown)
+                        {
+                            Logging.Write("[SmartLootRoller] Equipment comparison unavailable; deferring Need and Disenchant.");
+                        }
+                        else if (equippedScore == 0 || droppedScore > equippedScore * 1.01f)
                         {
                             matchesCriteria = true;
                             Logging.Write("[SmartLootRoller] Item '{0}' is an UPGRADE! (Score: {1:F1} > Equipped: {2:F1})", rollItemInfo.Name, droppedScore, equippedScore);
@@ -228,7 +236,7 @@ namespace SmartLootRoller
                 else
                 {
                     bool canDisenchant = Lua.GetReturnVal<bool>("return GetLootRollItemInfo(" + rollId + ")", 7);
-                    if (settings.RollForLootDE && canDisenchant)
+                    if (comparisonKnown && settings.RollForLootDE && canDisenchant)
                     {
                         rollType = 3; // Disenchant
                         Logging.Write("[SmartLootRoller] Item '{0}' does NOT match. Rolling Disenchant.", rollItemInfo.Name);

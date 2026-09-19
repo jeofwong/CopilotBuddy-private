@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "repository": "jeofwong/CopilotBuddy-private",
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "master": "f462a9bb4eb18acac9069f495177df35672286d5",
+  "verified_code": "0c918908d0b6372c1b8b20359982e037c87a635b",
+  "verified_tree": "daf4476e9836c8aaa4d3199c12d6fb0de760fef2",
+  "merchant_pending": {
+    "red": "85abc00a4c053f9ffd0257ed6d5ae3dc3c8cbe1d",
+    "production": "3ddcb0b3a0ea73b744aa1a7f37ac0f1837aeb34c",
+    "fixture_alignment": "905aa2bac0d824aacb8ad45736bb8f223deaab59",
+    "red_cases": "7/12",
+    "intended_assertions": 5,
+    "unexpected": 0
+  },
+  "provenance": {
+    "production": "4e7f96b69421551fc6a72795ca25bff04d6f3f02",
+    "fingerprint_test": "39484eda753ed19e54a97bcb1439c5ec90cc8294",
+    "fingerprint_fix": "c15310469017e029090ba45d2d6adac232fb32f0",
+    "current_dataset_source": "unknown"
+  },
+  "complex_dependencies": {
+    "positive_fix": "0f585a9525e4afd55f0c55ef31b7e85443a006e0",
+    "negative_fix": "94f2cb9689578ccf73c5f7c5b4d1960447869993",
+    "previous_quests_ids_global_semantics": "unresolved_exporter_provenance"
+  },
+  "pallypower": {
+    "bridge": "c94145ac6c4839e1509292365409989467166f92",
+    "version_pin": "bd6acce717c3dbaccd30d553d01fb79475577d76",
+    "version": "v3.2.21",
+    "writes_addon": false
+  },
+  "map_hints": {
+    "production": "bda579777ffd0003a6d3cd247adea3a96c93d774",
+    "runtime_enabled": false,
+    "authority": "search-hint-only"
+  },
+  "strategy_pack": {
+    "production": "0def9ffb547e9ac3b6ec96322c5f4686bcad42b8",
+    "runtime_execution": false
+  },
+  "reward": {
+    "red": "d27b241add22629ec8dd46d50955f560db34e98f",
+    "red_artifact": 10574058976,
+    "red_sha256": "d53e4cafe2b67f9fb3aa53cb777f57ff5a081ece8473c72cc15139c8803ece90",
+    "red_cases": "0/12",
+    "intended_assertions": 12,
+    "unexpected": 0,
+    "production": "2ed26fea569e8dc2d7600e9ab02417d27bca5354",
+    "visibility_fix": "0c918908d0b6372c1b8b20359982e037c87a635b",
+    "integrated": {
+      "run": 35412850647,
+      "artifact": 10575210442,
+      "sha256": "96e49a57538d6abada13c62ea8d3aedbd65d03654bdf0c95f4e8ba8b39b3684b",
+      "conclusion": "success",
+      "game_attached": false
+    },
+    "host": {
+      "run": 35412850625,
+      "artifact": 10575030460,
+      "sha256": "afbed4763aa50e841bc6efbfbb69758763d0ff886942489b58c57cf598a0b23a",
+      "conclusion": "success",
+      "tests_run": false
+    }
+  },
+  "open": [
+    "special recipe execution and authoritative acknowledgement",
+    "all-class effective-strength/exclusive buff policy",
+    "runtime Carbonite/map terrain/floor conversion",
+    "cap/loadout/set/proc equipment and reward policy",
+    "underwater escape/shoreline recovery",
+    "full GatherBuddy/rest/remount ownership",
+    "native UI/slot/cursor/LOS freshness",
+    "independent review",
+    "original-client/server acceptance"
+  ],
+  "exhaustive_complete": false
+}

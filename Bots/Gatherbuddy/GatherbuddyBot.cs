@@ -84,6 +84,19 @@ namespace Bots.Gatherbuddy
         // WoD: dateTime_0
         private static DateTime _sessionStart;
 
+        // Prevent immediate full-bag vendor churn while the per-stack merchant retry
+        // gate is still suppressing an unchanged refused/submitted observation.
+        private static DateTime _lastSaleVisitAt = DateTime.MinValue;
+        private static readonly TimeSpan SaleVisitCooldown = TimeSpan.FromMinutes(2);
+
+        internal static bool ShouldDeferSaleVisit(DateTime now, DateTime lastSaleVisitAt)
+        {
+            if (lastSaleVisitAt == DateTime.MinValue)
+                return false;
+            TimeSpan elapsed = now - lastSaleVisitAt;
+            return elapsed >= TimeSpan.Zero && elapsed < SaleVisitCooldown;
+        }
+
         // Per-node-name harvest counts, reported when the bot stops.
         public static readonly Dictionary<string, int> NodeCollectionCount = new Dictionary<string, int>();
 
@@ -174,6 +187,7 @@ namespace Bots.Gatherbuddy
             _lastLoggedNodeGuid       = 0;
             _gatherTimer.Reset();
             _sessionStart             = DateTime.Now;
+            _lastSaleVisitAt          = DateTime.MinValue;
 
             _waypoints.Clear();
             if (ProfileManager.CurrentProfile == null)
@@ -639,7 +653,7 @@ namespace Bots.Gatherbuddy
         /// </summary>
         private Composite CreateRepairBehavior()
         {
-            return new PrioritySelector(
+            return new Sequence(
                 // Phase 1: find repair vendor, move into range. Cache the unit for Phase 2.
                 new Action(ctx =>
                 {
@@ -722,7 +736,7 @@ namespace Bots.Gatherbuddy
         /// </summary>
         private Composite CreateSellBehavior()
         {
-            return new PrioritySelector(
+            return new Sequence(
                 // Phase 1: find vendor, move into range. Cache the unit for Phase 2.
                 new Action(ctx =>
                 {
@@ -786,7 +800,10 @@ namespace Bots.Gatherbuddy
                     // The atomic sale step verifies MerchantFrame inside the same Lua call.
                     new Action(ctx =>
                     {
-                        return Vendors.SellAllItemsStep() ? RunStatus.Success : RunStatus.Running;
+                        bool complete = Vendors.SellAllItemsStep();
+                        if (complete && MerchantFrame.Instance.IsVisible)
+                            _lastSaleVisitAt = DateTime.UtcNow;
+                        return complete ? RunStatus.Success : RunStatus.Running;
                     }),
                     new Action(ctx => { StyxWoW.SleepForLagDuration(); return RunStatus.Success; }),
                     // Repair if enabled and frame still open.
@@ -815,6 +832,8 @@ namespace Bots.Gatherbuddy
             if (StyxWoW.Me == null || StyxWoW.Me.Combat || StyxWoW.Me.IsDead || StyxWoW.Me.IsGhost)
                 return false;
             if (!GatherbuddySettings.Instance.VendorWhenFull)
+                return false;
+            if (ShouldDeferSaleVisit(DateTime.UtcNow, _lastSaleVisitAt))
                 return false;
 
             uint minFree      = (uint)GatherbuddySettings.Instance.MinFreeBagSlots;

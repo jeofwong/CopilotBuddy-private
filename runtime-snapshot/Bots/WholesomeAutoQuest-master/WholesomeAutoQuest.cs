@@ -969,11 +969,11 @@ namespace WholesomeAQ
 
             _dataLoader ??= loader;
             bool dataReady = false;
-            string dataset = _dataLoader.DatasetFingerprint;
+            string dataset = _dataLoader.ExecutionFingerprint;
             try
             {
                 dataReady = _dataLoader.Load() != null;
-                dataset = _dataLoader.DatasetFingerprint;
+                dataset = _dataLoader.ExecutionFingerprint;
             }
             catch (Exception ex)
             {

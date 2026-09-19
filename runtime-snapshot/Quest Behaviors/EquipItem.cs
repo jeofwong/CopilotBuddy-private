@@ -84,6 +84,19 @@ namespace Styx.Bot.Quest_Behaviors
         private bool _isBehaviorDone;
         private bool _isDisposed;
         private Composite _root;
+        private static readonly TimeSpan EquipTimeout = TimeSpan.FromSeconds(10);
+        private ulong _pendingEquipGuid;
+        private uint _pendingEquipEntry;
+        private InventorySlot _pendingEquipSlot = InventorySlot.None;
+        private int _pendingSourceBag = -1;
+        private int _pendingSourceSlot = -1;
+        private DateTime _pendingEquipSince;
+        private bool _pendingEquipSubmitted;
+
+        private bool HasPendingEquip
+        {
+            get { return _pendingEquipGuid != 0 && _pendingEquipEntry != 0; }
+        }
 
         // DON'T EDIT THESE--they are auto-populated by Subversion
         public override string SubversionId { get { return ("$Id: EquipItem.cs 217 2012-02-11 16:52:02Z Nesox $"); } }
@@ -127,24 +140,207 @@ namespace Styx.Bot.Quest_Behaviors
         {
             return _root ??
                 (_root = new PrioritySelector(
-                    new Action(c =>
-                    {
-                        if (Slot == InventorySlot.None)
-                        {
-                            Lua.DoString("EquipItemByName (\"" + ItemId + "\")");
-                        }
-                        else
-                        {
-                            WoWItem item = ObjectManager.Me.BagItems.FirstOrDefault(i => i.Entry == ItemId);
-                            if (item != null)
-                            {
-                                Lua.DoString("PickupContainerItem({0},{1}) EquipCursorItem({2})",
-                                    item.BagIndex + 1, item.BagSlot + 1, (int)Slot);
-                            }
-                        }
-                        _isBehaviorDone = true;
-                    })
+                    new Action(c => TickPendingEquip())
                 ));
+        }
+
+        private RunStatus TickPendingEquip()
+        {
+            if (_isBehaviorDone || _isDisposed)
+                return RunStatus.Success;
+
+            if (HasPendingEquip)
+            {
+                if (DateTime.UtcNow - _pendingEquipSince >= EquipTimeout)
+                {
+                    LogMessage("error",
+                        "EquipItem timed out waiting for equipment/cursor completion for item {0} ({1}), slot {2}.",
+                        _pendingEquipGuid, _pendingEquipEntry, _pendingEquipSlot);
+                    RestoreOwnedCursorToSource();
+                    ResetPendingEquip();
+                    _isBehaviorDone = true;
+                    return RunStatus.Success;
+                }
+
+                ConfirmOwnedEquipPopup();
+
+                if (IsPendingEquipAcknowledged())
+                {
+                    if (ReturnDisplacedCursorToSource())
+                    {
+                        LogMessage("info", "Equipped item {0} ({1}) successfully.",
+                            _pendingEquipGuid, _pendingEquipEntry);
+                        ResetPendingEquip();
+                        _isBehaviorDone = true;
+                    }
+                    return RunStatus.Success;
+                }
+
+                if (!_pendingEquipSubmitted && _pendingEquipSlot != InventorySlot.None)
+                    _pendingEquipSubmitted = SubmitOwnedCursorEquip();
+
+                return RunStatus.Success;
+            }
+
+            WoWItem item = StyxWoW.Me.CarriedItems.FirstOrDefault(ret => ret.Entry == ItemId);
+            if (item == null || !item.IsValid)
+            {
+                LogMessage("error", "Unable to find a valid carried item with id {0}.", ItemId);
+                _isBehaviorDone = true;
+                return RunStatus.Success;
+            }
+
+            _pendingEquipGuid = item.Guid;
+            _pendingEquipEntry = item.Entry;
+            _pendingEquipSlot = Slot;
+            _pendingEquipSince = DateTime.UtcNow;
+            _pendingEquipSubmitted = false;
+
+            if (Slot == InventorySlot.None)
+            {
+                Lua.DoString("EquipItemByName(\"{0}\")", ItemId);
+                _pendingEquipSubmitted = true;
+                return RunStatus.Success;
+            }
+
+            int sourceBag, sourceSlot;
+            if (!item.TryPickUp(out sourceBag, out sourceSlot))
+            {
+                ResetPendingEquip();
+                return RunStatus.Success;
+            }
+
+            _pendingSourceBag = sourceBag;
+            _pendingSourceSlot = sourceSlot;
+            _pendingEquipSubmitted = SubmitOwnedCursorEquip();
+            return RunStatus.Success;
+        }
+
+        private bool SubmitOwnedCursorEquip()
+        {
+            if (!HasPendingEquip || _pendingEquipSlot == InventorySlot.None)
+                return false;
+
+            string script = string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "local cursorType,cursorItemId=GetCursorInfo(); " +
+                "if cursorType~='item' or not CursorHasItem() or tonumber(cursorItemId)~={0} then return false end; " +
+                "if not CursorCanGoInSlot({1}) or IsInventoryItemLocked({1}) then return false end; " +
+                "EquipCursorItem({1}); return true",
+                _pendingEquipEntry, (int)_pendingEquipSlot);
+            try
+            {
+                return Lua.GetReturnVal<bool>(script, 0U);
+            }
+            catch (Exception error)
+            {
+                LogMessage("warning", "Owned equip submission failed safely: {0}", error.Message);
+                return false;
+            }
+        }
+
+        private void ConfirmOwnedEquipPopup()
+        {
+            if (!HasPendingEquip || !_pendingEquipSubmitted || _pendingEquipSlot == InventorySlot.None)
+                return;
+
+            try
+            {
+                string script = string.Format(
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    "local p=StaticPopup_FindVisible('EQUIP_BIND') or StaticPopup_FindVisible('AUTOEQUIP_BIND'); " +
+                    "if p and tonumber(p.data)=={0} and p.button1 then p.button1:Click() end",
+                    (int)_pendingEquipSlot);
+                Lua.DoString(script);
+            }
+            catch (Exception error)
+            {
+                LogMessage("warning", "Equip confirmation failed safely: {0}", error.Message);
+            }
+        }
+
+        private bool IsPendingEquipAcknowledged()
+        {
+            if (!HasPendingEquip || StyxWoW.Me == null ||
+                StyxWoW.Me.Inventory == null || StyxWoW.Me.Inventory.Equipped == null)
+                return false;
+
+            WoWItem[] equipped = StyxWoW.Me.Inventory.Equipped.Items;
+            if (equipped == null)
+                return false;
+
+            if (_pendingEquipSlot == InventorySlot.None)
+                return equipped.Any(item => item != null && item.Guid == _pendingEquipGuid);
+
+            int index = (int)_pendingEquipSlot - 1;
+            return index >= 0 && index < equipped.Length &&
+                equipped[index] != null &&
+                equipped[index].Guid == _pendingEquipGuid;
+        }
+
+        private bool ReturnDisplacedCursorToSource()
+        {
+            if (_pendingSourceBag < 0 || _pendingSourceSlot <= 0)
+                return !CursorHasAnyItem();
+
+            string script = string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "local cursorType,cursorItemId=GetCursorInfo(); " +
+                "if not cursorType then return true end; " +
+                "if cursorType~='item' or not CursorHasItem() then return false end; " +
+                "if tonumber(cursorItemId)=={0} then return false end; " +
+                "if GetContainerItemLink({1},{2}) then return false end; " +
+                "PickupContainerItem({1},{2}); return not CursorHasItem()",
+                _pendingEquipEntry, _pendingSourceBag, _pendingSourceSlot);
+            try
+            {
+                return Lua.GetReturnVal<bool>(script, 0U);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private void RestoreOwnedCursorToSource()
+        {
+            if (_pendingSourceBag < 0 || _pendingSourceSlot <= 0 || _pendingEquipEntry == 0)
+                return;
+            try
+            {
+                Lua.DoString(string.Format(
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    "local cursorType,cursorItemId=GetCursorInfo(); " +
+                    "if cursorType=='item' and CursorHasItem() and tonumber(cursorItemId)=={0} " +
+                    "and not GetContainerItemLink({1},{2}) then PickupContainerItem({1},{2}) end",
+                    _pendingEquipEntry, _pendingSourceBag, _pendingSourceSlot));
+            }
+            catch
+            {
+            }
+        }
+
+        private static bool CursorHasAnyItem()
+        {
+            try
+            {
+                return Lua.GetReturnVal<bool>("return CursorHasItem()", 0U);
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
+        private void ResetPendingEquip()
+        {
+            _pendingEquipGuid = 0;
+            _pendingEquipEntry = 0;
+            _pendingEquipSlot = InventorySlot.None;
+            _pendingSourceBag = -1;
+            _pendingSourceSlot = -1;
+            _pendingEquipSince = DateTime.MinValue;
+            _pendingEquipSubmitted = false;
         }
 
 

@@ -1,0 +1,99 @@
+{
+  "schema": "copilotbuddy-audit-evidence-v1",
+  "checkpoint": "W78-normal-objective-restart",
+  "repo": "jeofwong/CopilotBuddy-private",
+  "pr": 51,
+  "branch": "audit/next-55-equipment-observation-20260917",
+  "cutoff_ancestor": "4c6b1b2e75af4dd0eaffde11d38ebbc84a21f4c0",
+  "entry_head": "62b990c976577467859a49d56a983d499df36fd5",
+  "verified_commit": "44cfdca70a59f3cd660364748687782f23a2793d",
+  "verified_tree": "2085deefa367cf9bf2d65a1f660c8a50a15035b1",
+  "fixture_error": {
+    "commit": "921c951118686176bad9218d95b8445f9871bfc5",
+    "run": 35454576737,
+    "artifact": 10587463044,
+    "sha256": "07aa57e85f466680a75eb3e3229af390c870222b0040882bd0a606ddea2bae4a",
+    "result": "0/37; assertions=0; unexpected=37",
+    "cause": "uninitialized fixture owners lacked base constructor state before real OnStart/WarnUnusedAttributes",
+    "is_gameplay_assertion_red": false,
+    "crc_verified": true,
+    "inner_hashes_verified": 183
+  },
+  "clean_red": {
+    "commit": "5ccbce88041ba41fa4886988034cac7d185f905d",
+    "tree": "e1605a3f63d97a4a85edf2eb046fdb4a73c05f84",
+    "run": 35455019434,
+    "artifact": 10587603166,
+    "sha256": "62e1971dc330de5344ad0653982f217ed31a8c64e1b7752edced97d6a777c4ce",
+    "result": "23/37; assertions=14; unexpected=0; other16 integrated entries pass",
+    "crc_verified": true,
+    "inner_hashes_verified": 183,
+    "indexed_inputs": 1820
+  },
+  "green": {
+    "run": 35455659843,
+    "artifact": 10588032523,
+    "sha256": "32a1079bf26cdfe7b83e562112a0ed4d6c8830a5c891d8a6f7dac10ecb45cdbc",
+    "result": "37/37; assertions=0; unexpected=0; integrated17/17; all build/run exits0",
+    "crc_verified": true,
+    "inner_hashes_verified": 183,
+    "indexed_inputs": 1821,
+    "game_attached": false
+  },
+  "host": {
+    "run": 35455659845,
+    "artifact": 10588291999,
+    "sha256": "093ad1cf52e86631c568afc8bc82292c9bcb8cfca58c078d42d6f0a1133ca825",
+    "crc_verified": true,
+    "inner_manifest_present": false,
+    "build_exit": 0,
+    "warnings": 3344,
+    "errors": 0,
+    "tests_run": false,
+    "game_attached": false
+  },
+  "focused_quest_log": {
+    "run": 35455659850,
+    "artifact": 10588381917,
+    "sha256": "8c99d2c6461062e4e7ec5420f24c5758c0e8ffc8e44b7644c9e79fbaa49f4e7f",
+    "crc_verified": true,
+    "inner_manifest_present": false,
+    "build_exit": 0,
+    "run_exit": 0,
+    "groups": ["27/27", "16/16", "5/5", "28/28"],
+    "game_attached": false
+  },
+  "unchanged_fixture_pair": {
+    "red": "5ccbce88041ba41fa4886988034cac7d185f905d",
+    "green": "44cfdca70a59f3cd660364748687782f23a2793d",
+    "identical_normalized_members": 139,
+    "only_changed_indexed_inputs": [
+      "Styx/Logic/Questing/QuestObjectiveCompletion.cs",
+      "runtime-snapshot/Quest Behaviors/GossipEvent.cs",
+      "runtime-snapshot/Quest Behaviors/UseItemOn.cs"
+    ],
+    "helper_is_new": true,
+    "all_indexed_tests_and_workflows_unchanged": true
+  },
+  "execution_scope": "Complete tracked UseItemOn/GossipEvent, real constructors/OnStart/TreeSharp and packed Quest.GetData over allocated fixture bytes; controlled cached requirements/world/UI. No native item dispatch or game attached.",
+  "primary_sources": [
+    {"repo": "TrinityCore/TrinityCore", "commit": "8fda442f6c30ca21a622638063ab8b28376f1b25", "path": "src/server/game/Quests/QuestDef.h", "blob": "686efa9db8c08604653067da32cd491aaffe809a"},
+    {"repo": "azerothcore/azerothcore-wotlk", "commit": "8337a378ac325e62a6a91e00c6a5e944205e8536", "path": "src/server/game/Quests/QuestDef.h", "blob": "9f08d6b918c293d4ce681af6b0fcafb62cee4783"}
+  ],
+  "new_lua_api": false,
+  "new_native_offset": false,
+  "permanent_completed_behavior_cache": false,
+  "superseded_unreferenced_candidate": "53312c130a0d5adcbdc4f909839c108a15d78c51",
+  "open_gates": [
+    "event-only/handwritten-profile and generated preamble admission beyond normal counters",
+    "displaced-item and popup/cross-plugin cursor ownership",
+    "Gordunni shovel/location/spawn/loot recipe",
+    "remaining post-cutoff cross-owner review",
+    "independent review and supervised original-client/server acceptance"
+  ],
+  "expected_master": "b2324913e2499ba30b239dd67224ca2c655c05cc",
+  "master_writes_this_continuation": false,
+  "merged": false,
+  "deployed": false,
+  "full_review_complete": false
+}

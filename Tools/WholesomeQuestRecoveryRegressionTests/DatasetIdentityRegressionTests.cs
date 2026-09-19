@@ -33,6 +33,12 @@ internal static class DatasetIdentityRegressionTests
                 string b = Write(root, "b/quest_data.json", "same");
                 Check(Fingerprint(a) == Fingerprint(b), "absolute installation paths are not dataset content");
             }),
+            ("legacy v2 manifest preserves pre-provenance digest identity", root =>
+            {
+                string p = Write(root, "quest_data.json", "{\"Quests\":[]}");
+                Check(Fingerprint(p) == "e69a63f01976efd1a9c32d9488c2cda78a5d5512ac5a4fb0f88e83b2adebaee9",
+                    "provenance support changed the existing no-sidecar recovery identity");
+            }),
             ("manifest enumeration order is irrelevant", root =>
             {
                 string a = Write(root, "quests.json", "quest"), b = Write(root, "spawns.json", "spawn");

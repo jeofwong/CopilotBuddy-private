@@ -1,0 +1,13 @@
+@GitHub
+
+Continue jeofwong/CopilotBuddy-private (1367174964), draft PR51 on audit/next-55-equipment-observation-20260917. Re-read live refs and `docs/audit/2026-09-18/W66_CHECKPOINT.md` / `W66_EVIDENCE.json` before writing.
+
+Latest verified code **37511a5f0a4db7b8fe91efd1475f8d2700cad4f6**, tree **71de8d71865929a8b8938ccdd8180b8e76c66ecc**. W65 docs were eight commits stale; W66 reviewed and retained those intervening repair/quest/analyzer changes rather than recreating them.
+
+W66 new red `b0c4b7c9`: integrated35358935120/art10553796622, GatherBuddy sale-visit backoff1/9,8 intended assertions,0unexpected. Production through `42f38223` adds only the finite GatherBuddy visit backoff and preserves mixed line endings. Its first integrated result was8/9 solely because the test expected exact assignment whitespace; analyzers75/75. Test-only `37511a5f` makes that same reset assertion whitespace-agnostic. Final integrated35360041922/art10553948558 SHAfd536ab64c075d43f9f967d929b61574ac30116d3681bb3dfc82601e585c24ae:17/17 entries,9/9 new cases,101 Wholesome+3 QuestLog groups,75 analyzers,1793 indexed inputs,116 normalized file members. Host35360041925/art10553963467 SHA6ca4ec4697f452da2434d799d57fd5a60c2a1e0e4b33e507f63f41fa0b008eee:0errors3304warnings.
+
+Semantics: after a terminal sale step while the MerchantFrame is still visible, GatherBuddy records a two-minute visit timestamp. NeedsBagsEmptied defers re-entry during that finite window; Start clears stale state. This is outer visit throttling, not merchant acknowledgement. MerchantSaleAttemptGate remains per observed player/merchant/bag/slot/count/link. No item deletion/permanent blacklist.
+
+NEXT: persistent unknown/malformed (-1) or locked/pending (2) results can still keep one Vendors.ContinueSellSession active indefinitely. Design a distinct bounded no-progress test/repair. Preserve result1 progress, result0 completion, result3 close behavior, result4 bounded deferral, session replacement/reentrancy and exact cancellation/interruption. Do not simply flip -1/2 to success; do not close arbitrary UI; do not use the120s stack retry as an idle deadline. Existing dynamic vendor fixtures may need mechanical field support if a new session timestamp is introduced, but do not weaken their assertions.
+
+Retain original3.3.5a/build12340, TC3.3.5 primary/AC secondary, all prerequisite/provenance/special-quest/PallyPower/Carbonite/buff/gear/underwater/LOS/GatherBuddy/native acceptance requirements. Masterf462a9bb unchanged. Preserve backups, exclude25/43/45, no remerge44/47, PR51 merge, force push, deployment or installed addon/binary/mesh modification.
